@@ -63,7 +63,7 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 	protected encodeValue(value?: T): string{
 		// no need to handle it in encodevalue since urlencode already handles it
 		const realValue = value ?? this._value;
-		return this.toString();
+		return realValue.toString();
 	}
 
 	// does NOT handle full urls, just the decoding (for strings). only does T->T, since the only counterexample is enums

@@ -1,0 +1,16 @@
+import {SimplePBFField, extendOptions, PBFFieldOptions} from "./core";
+
+// a pbf field with an int64 type (j)
+// WARNING: since ts / js does floats, not ints, large values will get changed!!
+export default class Int64PBFField extends SimplePBFField<number>{
+	constructor(options?: PBFFieldOptions){
+		super(extendOptions("j", options));
+	}
+
+	protected validateValue(value?: number): void{
+		const realValue = value ?? this._value;
+		super.validateValue(realValue);
+		if(!Number.isInteger(realValue)) throw new Error(`Invalid value for int64: ${realValue}`);
+		if(realValue > Number.MAX_SAFE_INTEGER) console.warn("Value is too large, may be imprecise");
+	}
+}
