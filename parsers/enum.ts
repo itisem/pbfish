@@ -1,16 +1,16 @@
 import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core";
 
-interface EnumPBFFieldOptions extends PBFFieldOptions{
+export interface EnumPBFFieldOptions extends PBFFieldOptions{
 	codes: PBFEnum[];
 };
 
-interface PBFEnum{
+export interface PBFEnum{
 	code: number;
 	value: string;
 };
 
 // a pbf field with an enum type (e)
-export class EnumPBFField extends GenericPBFField<number, string>{
+export default class EnumPBFField extends GenericPBFField<number, string>{
 	codes: PBFEnum[];
 
 	constructor(options: EnumPBFFieldOptions){

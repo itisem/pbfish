@@ -1,4 +1,4 @@
-import {EnumPBFField} from "../parsers/enum";
+import EnumPBFField from "../parsers/enum";
 
 const baseFieldOptions = {
 	codes: [
