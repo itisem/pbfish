@@ -31,5 +31,6 @@ describe("string pbf fields", () => {
 	test("encoding throws when a field is required", () => {
 		const tester = new StringPBFField({fieldNumber: 3, required: true});
 		expect(() => tester.urlEncode()).toThrow();
+		expect(() => tester.jsonEncode()).toThrow();
 	});
 });

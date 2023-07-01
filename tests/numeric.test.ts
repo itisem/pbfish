@@ -46,4 +46,23 @@ describe("numeric fields", () => {
 		expect(encodingTestValid(new UInt32PBFField(options))).toEqual("!9u100");
 		expect(encodingTestValid(new UInt64PBFField(options))).toEqual("!9v100");
 	});
+	test("urlencoding throws when field number is unset", () => {
+		expect(() => new DoublePBFField().urlEncode()).toThrow();
+		expect(() => new Fixed32PBFField().urlEncode()).toThrow();
+		expect(() => new Fixed64PBFField().urlEncode()).toThrow();
+		expect(() => new FloatPBFField().urlEncode()).toThrow();
+		expect(() => new Int32PBFField().urlEncode()).toThrow();
+		expect(() => new Int64PBFField().urlEncode()).toThrow();
+		expect(() => new SFixed32PBFField().urlEncode()).toThrow();
+		expect(() => new SFixed64PBFField().urlEncode()).toThrow();
+		expect(() => new SInt32PBFField().urlEncode()).toThrow();
+		expect(() => new SInt64PBFField().urlEncode()).toThrow();
+		expect(() => new UInt32PBFField().urlEncode()).toThrow();
+		expect(() => new UInt64PBFField().urlEncode()).toThrow();
+	});
+	test("encoding throws when a field is required", () => {
+		const tester = new DoublePBFField({fieldNumber: 9, required: true});
+		expect(() => tester.urlEncode()).toThrow();
+		expect(() => tester.jsonEncode()).toThrow();
+	})
 });
