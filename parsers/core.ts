@@ -31,9 +31,11 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		return this.options.fieldNumber;
 	}
 
+	get isUndefined(): boolean{
+		return this._value === undefined;
+	}
+
 	abstract validateValue(value?: T): void;
-	protected abstract encodeValue(value?: T): string;
-	protected abstract decodeValue(value?: T | U | null): T | undefined;
 	abstract urlEncode(): void;
 	abstract jsonEncode(): V;
 }

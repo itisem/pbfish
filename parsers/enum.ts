@@ -71,12 +71,6 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return realValue.toString();
 	}
 
-	protected decodeValue(value: number | null) : number | undefined{
-		if(value === null) return undefined;
-		this.validateValue(value);
-		return value;
-	}
-
 	urlEncode(): string{
 		this.validateValue();
 		if(this._value === undefined) return "";
