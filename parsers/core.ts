@@ -8,9 +8,11 @@ export interface PBFFieldOptions{
 	delimiter?: string;
 };
 
-export type SingleEncodedValue = number | string | undefined;
+export type SingleEncodedValue = number | string | boolean | undefined;
 
-export type AnyEncodedValue = Array<AnyEncodedValue | SingleEncodedValue>;
+export type AnyEncodedValue = SingleEncodedValue | Array<AnyEncodedValue | SingleEncodedValue>;
+
+export const defaultDelimiter = "!";
 
 // what a protobuf parser class should generally behave like
 export abstract class GenericPBFField<T, U = T, V = T>{
@@ -31,13 +33,22 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		return this.options.fieldNumber;
 	}
 
+	set delimiter(newDelimiter: string | undefined){
+		if(newDelimiter === undefined) this.options.delimiter = defaultDelimiter;
+		else this.options.delimiter = newDelimiter;
+	}
+
+	get delimiter(): string{
+		return this.options.delimiter ?? defaultDelimiter;
+	}
+
 	get isUndefined(): boolean{
 		return this._value === undefined;
 	}
 
 	abstract validateValue(value?: T): void;
 	abstract urlEncode(): void;
-	abstract jsonEncode(): V;
+	abstract arrayEncode(): V | undefined;
 }
 
 // generic classes for pbf fields. should never be used on its own, only derived classes
@@ -94,17 +105,17 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 		if(!this.options.fieldNumber){
 			return this.encodeValue();
 		}
-		const delimiter = this.options.delimiter ?? "!";
+		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		return delimiter + this.options.fieldNumber.toString() + this.options.fieldType + this.encodeValue();
 	}
 
 	// json protobuf formatting
 	// should never just return a number unless it's an enum
-	jsonEncode(): T | null{
+	arrayEncode(): T | undefined{
 		// just prepares the value to be encoded with JSON.stringify
 		// does not actually do any encoding itself
 		this.validateValue();
-		if(this._value === undefined) return null;
+		if(this._value === undefined) return undefined;
 		return this._value;
 	}
 

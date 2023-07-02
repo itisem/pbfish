@@ -36,9 +36,9 @@ describe("enum pbf fields", () => {
 	});
 	test("value can be returned to be prepared for json encoding", () => {
 		const tester = new EnumPBFField(baseFieldOptions);
-		expect(tester.jsonEncode()).toEqual(null);
+		expect(tester.arrayEncode()).toBeUndefined();
 		tester.value = "Tajikistan";
-		expect(tester.jsonEncode()).toEqual(42);
+		expect(tester.arrayEncode()).toEqual(42);
 	});
 	test("value can be urlencoded", () => {
 		const tester = new EnumPBFField({...baseFieldOptions, fieldNumber: 3});
@@ -57,6 +57,6 @@ describe("enum pbf fields", () => {
 	test("encoding throws when a field is required", () => {
 		const tester = new EnumPBFField({...baseFieldOptions, fieldNumber: 3, required: true});
 		expect(() => tester.urlEncode()).toThrow();
-		expect(() => tester.jsonEncode()).toThrow();
+		expect(() => tester.arrayEncode()).toThrow();
 	});
 })

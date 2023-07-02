@@ -15,13 +15,13 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 
 	constructor(options: EnumPBFFieldOptions){
 		super(extendOptions("e", options));
-		const {codes} = options;
+		const {codes, ...miscOptions} = options;
 		this.codes = codes;
 		if(options.fieldNumber){
 			if(!Number.isInteger(options.fieldNumber)) throw new Error(`Invalid field number ${options.fieldNumber}`);
 			if(options.fieldNumber < 1) throw new Error(`Invalid field number ${options.fieldNumber}`);
 		}
-		this.options = options;
+		this.options = {...miscOptions};
 		// since this is its own implementation, fieldType is just left to be its own thing
 	}
 
@@ -81,9 +81,9 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return delimiter + this.options.fieldNumber.toString() + "e" + this.encodeValue();
 	}
 
-	jsonEncode(): number | null{
+	arrayEncode(): number | undefined{
 		this.validateValue();
-		if(this._value === undefined) return null;
+		if(this._value === undefined) return undefined;
 		return this._value;
 	}
 }

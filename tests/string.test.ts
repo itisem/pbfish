@@ -9,9 +9,9 @@ describe("string pbf fields", () => {
 	});
 	test("value is returned normally when used in jsons", ()  => {
 		const tester = new StringPBFField();
-		expect(tester.jsonEncode()).toEqual(null);
+		expect(tester.arrayEncode()).toBeUndefined();
 		tester.value = "hello world";
-		expect(tester.jsonEncode()).toEqual("hello world");
+		expect(tester.arrayEncode()).toEqual("hello world");
 	});
 	test("value can be urlencoded", () => {
 		const tester = new StringPBFField({fieldNumber: 3});
@@ -32,6 +32,6 @@ describe("string pbf fields", () => {
 	test("encoding throws when a field is required", () => {
 		const tester = new StringPBFField({fieldNumber: 3, required: true});
 		expect(() => tester.urlEncode()).toThrow();
-		expect(() => tester.jsonEncode()).toThrow();
+		expect(() => tester.arrayEncode()).toThrow();
 	});
 });

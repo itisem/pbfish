@@ -1,22 +1,22 @@
 import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core";
 
-export default class ReservedPBFField extends GenericPBFField<null, any>{
+export default class ReservedPBFField extends GenericPBFField<undefined>{
 	constructor(options?: PBFFieldOptions){
 		// doesn't matter, everything is nothing
 		super(extendOptions("-", options));
 		this.options = options;
-		this._value = null;
+		this._value = undefined;
 	}
 
 	set value(value: any){
-		this._value = null;
+		this._value = undefined;
 	}
 
 	get value(){
-		return null;
+		return undefined;
 	}
 
-	validateValue(value?: null){
+	validateValue(value: undefined){
 		return;
 	}
 
@@ -24,7 +24,7 @@ export default class ReservedPBFField extends GenericPBFField<null, any>{
 		return "";
 	}
 
-	jsonEncode(){
-		return null;
+	arrayEncode(){
+		return undefined;
 	}
 }

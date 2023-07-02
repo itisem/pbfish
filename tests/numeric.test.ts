@@ -27,7 +27,7 @@ describe("numeric fields", () => {
 	test("value is returned normally in jsons", () => {
 		const tester = new UInt64PBFField();
 		tester.value = 10;
-		expect(tester.jsonEncode()).toEqual(10);
+		expect(tester.arrayEncode()).toEqual(10);
 	});
 	test("value can be urlencoded", () => {
 		const options = {fieldNumber: 9};
@@ -63,6 +63,6 @@ describe("numeric fields", () => {
 	test("encoding throws when a field is required", () => {
 		const tester = new DoublePBFField({fieldNumber: 9, required: true});
 		expect(() => tester.urlEncode()).toThrow();
-		expect(() => tester.jsonEncode()).toThrow();
+		expect(() => tester.arrayEncode()).toThrow();
 	})
 });
