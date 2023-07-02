@@ -13,7 +13,7 @@ export type SingleEncodedValue = number | string | undefined;
 export type AnyEncodedValue = Array<AnyEncodedValue | SingleEncodedValue>;
 
 // what a protobuf parser class should generally behave like
-export abstract class GenericPBFField<T, U = T>{
+export abstract class GenericPBFField<T, U = T, V = T>{
 	protected _value?: T;
 	protected options: GenericPBFFieldOptions;
 	constructor(options: GenericPBFFieldOptions){};
@@ -35,7 +35,7 @@ export abstract class GenericPBFField<T, U = T>{
 	protected abstract encodeValue(value?: T): string;
 	protected abstract decodeValue(value?: T | U | null): T | undefined;
 	abstract urlEncode(): void;
-	abstract jsonEncode(): T;
+	abstract jsonEncode(): V;
 }
 
 // generic classes for pbf fields. should never be used on its own, only derived classes

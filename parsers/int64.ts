@@ -10,6 +10,7 @@ export default class Int64PBFField extends SimplePBFField<number>{
 	validateValue(value?: number): void{
 		const realValue = value ?? this._value;
 		super.validateValue(realValue);
+		if(realValue === undefined) return;
 		if(!Number.isInteger(realValue)) throw new Error(`Invalid value for int64: ${realValue}`);
 		if(realValue > Number.MAX_SAFE_INTEGER) console.warn("Value is too large, may be imprecise");
 	}

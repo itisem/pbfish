@@ -24,9 +24,10 @@ describe("string pbf fields", () => {
 		tester2.value = "hello world";
 		expect(tester2.urlEncode()).toEqual("&3shello%20world");
 	});
-	test("urlencoding throws when field number is unset", () => {
+	test("urlencoding returns the value when field number is unset", () => {
 		const tester = new StringPBFField();
-		expect(() => tester.urlEncode()).toThrow();
+		tester.value = "hi";
+		expect(tester.urlEncode()).toEqual("hi");
 	});
 	test("encoding throws when a field is required", () => {
 		const tester = new StringPBFField({fieldNumber: 3, required: true});

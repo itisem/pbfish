@@ -49,9 +49,10 @@ describe("enum pbf fields", () => {
 		tester2.value = "Kazakhstan";
 		expect(tester2.urlEncode()).toEqual("&3e2");
 	});
-	test("urlencoding throws when field number is unset", () => {
+	test("urlencoding returns the value when field number is unset", () => {
 		const tester = new EnumPBFField(baseFieldOptions);
-		expect(() => tester.urlEncode()).toThrow();
+		tester.value = "Uzbekistan";
+		expect(tester.urlEncode()).toEqual("1");
 	});
 	test("encoding throws when a field is required", () => {
 		const tester = new EnumPBFField({...baseFieldOptions, fieldNumber: 3, required: true});
