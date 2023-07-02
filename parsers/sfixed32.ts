@@ -7,7 +7,7 @@ export default class SFixed32PBFField extends SimplePBFField<number>{
 		super(extendOptions("g", options));
 	}
 
-	protected validateValue(value?: number): void{
+	validateValue(value?: number): void{
 		const realValue = value ?? this._value;
 		super.validateValue(realValue);
 		if(realValue === undefined) return;

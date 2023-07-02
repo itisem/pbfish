@@ -7,7 +7,7 @@ export default class UInt64PBFField extends SimplePBFField<number>{
 		super(extendOptions("v", options));
 	}
 
-	protected validateValue(value?: number): void{
+	validateValue(value?: number): void{
 		const realValue = value ?? this._value;
 		super.validateValue(realValue);
 		if(realValue === undefined) return;

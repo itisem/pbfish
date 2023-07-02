@@ -45,11 +45,6 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return this.lookupCode(this._value);
 	}
 
-	get fieldNumber(): number{
-		if(!this.options.fieldNumber) throw new Error("Unspecified field number");
-		return this.options.fieldNumber;
-	}
-
 	protected lookupCode(code: number): string{
 		if(code === null || code === undefined) return undefined;
 		const found = this.codes.find(element => element.code === code);
@@ -64,7 +59,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return found.code;
 	}
 
-	protected validateValue(value?: number){
+	validateValue(value?: number){
 		const realValue = value ?? this._value;
 		if(this.options.required && realValue === undefined) throw new Error("A required field cannot have an undefined value");
 		this.lookupCode(value);

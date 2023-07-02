@@ -8,7 +8,7 @@ export default class Fixed64PBFField extends SimplePBFField<number>{
 		super(extendOptions("y", options));
 	}
 
-	protected validateValue(value?: number): void{
+	validateValue(value?: number): void{
 		const realValue = value ?? this._value;
 		super.validateValue(realValue);
 		if(realValue === undefined) return;

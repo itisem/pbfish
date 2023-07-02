@@ -7,7 +7,7 @@ export default class Int64PBFField extends SimplePBFField<number>{
 		super(extendOptions("j", options));
 	}
 
-	protected validateValue(value?: number): void{
+	validateValue(value?: number): void{
 		const realValue = value ?? this._value;
 		super.validateValue(realValue);
 		if(!Number.isInteger(realValue)) throw new Error(`Invalid value for int64: ${realValue}`);

@@ -19,8 +19,19 @@ export abstract class GenericPBFField<T, U = T>{
 	constructor(options: GenericPBFFieldOptions){};
 	abstract set value(value: T | U | undefined);
 	abstract get value(): U;
-	abstract get fieldNumber(): number;
-	protected abstract validateValue(value?: T): void;
+
+	set fieldNumber(newFieldNumber: number){
+		if(!Number.isInteger(newFieldNumber)) throw new Error(`Invalid field number ${newFieldNumber}`);
+		if(newFieldNumber < 1) throw new Error(`Invalid field number ${newFieldNumber}`);
+		this.options.fieldNumber = newFieldNumber;
+	}
+
+	get fieldNumber(): number{
+		if(!this.options.fieldNumber) throw new Error("Unspecified field number");
+		return this.options.fieldNumber;
+	}
+
+	abstract validateValue(value?: T): void;
 	protected abstract encodeValue(value?: T): string;
 	protected abstract decodeValue(value?: T | U | null): T | undefined;
 	abstract urlEncode(): void;
@@ -50,13 +61,8 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 		return this._value;
 	}
 
-	get fieldNumber(): number{
-		if(!this.options.fieldNumber) throw new Error("Unspecified field number");
-		return this.options.fieldNumber;
-	}
-
 	// checks whether a value is valid. overwrite for derived classes
-	protected validateValue(value?: T): void{
+	validateValue(value?: T): void{
 		const realValue = value ?? this._value;
 		if(this.options?.required && realValue === undefined) throw new Error("A required field cannot have an undefined value");
 	}
