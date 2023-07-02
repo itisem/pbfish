@@ -84,8 +84,10 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 
 	urlEncode(): string{
 		this.validateValue();
-		if(!this.options.fieldNumber) throw new Error("Please specify a field number before url encoding");
 		if(this._value === undefined) return "";
+		if(!this.options.fieldNumber){
+			return this.encodeValue();
+		}
 		const delimiter = this.options.delimiter ?? "!";
 		return delimiter + this.options.fieldNumber.toString() + "e" + this.encodeValue();
 	}

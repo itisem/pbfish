@@ -8,6 +8,10 @@ export interface PBFFieldOptions{
 	delimiter?: string;
 };
 
+export type SingleEncodedValue = number | string | undefined;
+
+export type AnyEncodedValue = Array<AnyEncodedValue | SingleEncodedValue>;
+
 // what a protobuf parser class should generally behave like
 export abstract class GenericPBFField<T, U = T>{
 	protected _value?: T;
@@ -76,10 +80,12 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 
 	urlEncode(): string{
 		this.validateValue();
-		if(!this.options.fieldNumber) throw new Error("Please specify a field number before url encoding");
 		if(!this.options.fieldType) throw new Error("Please specify a field type before url encoding");
 		// for urlencoding, empty values can just be left out. DO NOT remove, or else encodeValue will have problems with undefined
 		if(this._value === undefined) return "";
+		if(!this.options.fieldNumber){
+			return this.encodeValue();
+		}
 		const delimiter = this.options.delimiter ?? "!";
 		return delimiter + this.options.fieldNumber.toString() + this.options.fieldType + this.encodeValue();
 	}
