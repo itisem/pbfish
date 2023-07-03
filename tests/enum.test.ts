@@ -59,4 +59,16 @@ describe("enum pbf fields", () => {
 		expect(() => tester.toUrl()).toThrow();
 		expect(() => tester.toArray()).toThrow();
 	});
+	test("decoding works", () => {
+		const tester = new EnumPBFField({...baseFieldOptions, fieldNumber: 3});
+		tester.fromArray(2);
+		expect( tester.value).toEqual("Kazakhstan");
+		tester.fromUrl("4");
+		expect(tester.value).toEqual("Kyrgyzstan");
+		tester.fromUrl("!3e42");
+		expect(tester.value).toEqual("Tajikistan");
+		expect(() => tester.fromUrl("!3e3")).toThrow();
+		expect(() => tester.fromUrl("!4e1")).toThrow();
+		expect(() => tester.fromUrl("!3z1")).toThrow();
+	})
 })

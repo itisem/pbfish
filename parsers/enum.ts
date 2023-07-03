@@ -1,4 +1,4 @@
-import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {GenericPBFField, extendOptions, PBFFieldOptions, defaultDelimiter} from "./core";
 
 export interface EnumPBFFieldOptions extends PBFFieldOptions{
 	codes: PBFEnum[];
@@ -77,13 +77,39 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		if(!this.options.fieldNumber){
 			return this.encodeValue();
 		}
-		const delimiter = this.options.delimiter ?? "!";
+		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		return delimiter + this.options.fieldNumber.toString() + "e" + this.encodeValue();
+	}
+
+	fromUrl(value?: string){
+		if(!value) this._value = undefined;
+		let newValue: number;
+		if(value.startsWith(this.options.delimiter ?? defaultDelimiter)){
+			const pattern = /^!([0-9]+)([a-z])(.*)$/;
+			const matches = value.match(pattern);
+			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
+			const fieldNumber = parseInt(matches[1], 10);
+			if(fieldNumber < 1) throw new Error("Invalid field number");
+			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
+			else this.options.fieldNumber = fieldNumber;
+			if(matches[2] !== "e") throw new Error("Field types don't match");
+			newValue = Number(matches[3]);
+		}
+		else{
+			newValue = Number(value);
+		}
+		this.validateValue(newValue);
+		this._value = newValue;
 	}
 
 	toArray(): number | undefined{
 		this.validateValue();
 		if(this._value === undefined) return undefined;
 		return this._value;
+	}
+
+	fromArray(value?: number){
+		this.validateValue(value);
+		this._value = value;
 	}
 }
