@@ -91,11 +91,8 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		return realValue.toString();
 	}
 
-	/*// does NOT handle full urls, just the decoding (for strings). only does T->T, since the only counterexample is enums
-	protected decodeValue(value?: T | null): T | undefined{
-		if(value === null) return undefined;
-		return value;
-	}*/
+	// needs abstraction since how the values are handled differs from case to case
+	protected abstract decodeValue(value?: string): T | undefined;
 
 	// protobuf urls
 
@@ -111,7 +108,26 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		return delimiter + this.options.fieldNumber.toString() + this.options.fieldType + this.encodeValue();
 	}
 
-	// fromUrl needs to be specified within each class due to type conversion issues
+	fromUrl(value?: string){
+		if(!value) this._value = undefined;
+		let newValue: T;
+		if(value.startsWith(this.options.delimiter ?? defaultDelimiter)){
+			const pattern = /^!([0-9]+)([a-z])(.*)$/;
+			const matches = value.match(pattern);
+			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
+			const fieldNumber = parseInt(matches[1], 10);
+			if(fieldNumber < 1) throw new Error("Invalid field number");
+			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
+			else this.options.fieldNumber = fieldNumber;
+			if(this.options.fieldType && this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
+			newValue = this.decodeValue(matches[3]);
+		}
+		else{
+			newValue = this.decodeValue(value);
+		}
+		this.validateValue(newValue);
+		this._value = newValue;
+	}
 
 	// json protobuf formatting
 	// should never just return a number unless it's an enum
@@ -136,25 +152,8 @@ export class NumericPBFField extends SimplePBFField<number>{
 		super(options);
 	}
 
-	fromUrl(value?: string){
-		if(!value) this._value = undefined;
-		let newValue: number;
-		if(value.startsWith(this.options.delimiter ?? defaultDelimiter)){
-			const pattern = /^!([0-9]+)([a-z])([0-9]+)$/;
-			const matches = value.match(pattern);
-			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
-			const fieldNumber = parseInt(matches[1], 10);
-			if(fieldNumber < 1) throw new Error("Invalid field number");
-			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
-			else this.options.fieldNumber = fieldNumber;
-			if(this.options.fieldType && this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
-			newValue = Number(matches[3]);
-		}
-		else{
-			newValue = Number(value);
-		}
-		this.validateValue(newValue);
-		this._value = newValue;
+	decodeValue(value?: string): number | undefined{
+		return (value === "" || value === undefined) ? undefined : Number(value);
 	}
 }
 

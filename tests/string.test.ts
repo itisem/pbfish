@@ -42,4 +42,18 @@ describe("string pbf fields", () => {
 		expect(() => tester.toUrl()).toThrow();
 		expect(() => tester.toArray()).toThrow();
 	});
+	test("decoding works", () => {
+		const tester = new StringPBFField({fieldNumber: 3});
+		tester.fromArray("hello world");
+		expect(tester.value).toEqual("hello world");
+		tester.fromUrl("TajikistA*2An");
+		expect(tester.value).toEqual("TajikistA*n");
+		tester.fromUrl("!3sNICE");
+		expect(tester.value).toEqual("NICE");
+		expect(() => tester.fromUrl("!4sBad")).toThrow();
+		expect(() => tester.fromUrl("!3zuhoh")).toThrow();
+		const tester2 = new Base64StringPBFField({fieldNumber: 3});
+		tester2.fromUrl("!3zaGVsbG8gd29ybGQ");
+		expect(tester2.value).toEqual("hello world")
+	});
 });
