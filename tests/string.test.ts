@@ -1,4 +1,5 @@
 import StringPBFField from "../parsers/string";
+import Base64StringPBFField from "../parsers/base64-string";
 
 describe("string pbf fields", () => {
 	test("value can be set", () => {
@@ -12,6 +13,10 @@ describe("string pbf fields", () => {
 		expect(tester.arrayEncode()).toBeUndefined();
 		tester.value = "hello world";
 		expect(tester.arrayEncode()).toEqual("hello world");
+		const tester2 = new Base64StringPBFField();
+		expect(tester2.arrayEncode()).toBeUndefined();
+		tester2.value = "hello world";
+		expect(tester2.arrayEncode()).toEqual("hello world");
 	});
 	test("value can be urlencoded", () => {
 		const tester = new StringPBFField({fieldNumber: 3});
@@ -23,6 +28,9 @@ describe("string pbf fields", () => {
 		const tester2 = new StringPBFField({fieldNumber: 3, delimiter: "&"});
 		tester2.value = "hello world";
 		expect(tester2.urlEncode()).toEqual("&3shello%20world");
+		const tester3 = new Base64StringPBFField({fieldNumber: 3});
+		tester3.value = "hello world";
+		expect(tester3.urlEncode()).toEqual("!3zaGVsbG8gd29ybGQ")
 	});
 	test("urlencoding returns the value when field number is unset", () => {
 		const tester = new StringPBFField();
