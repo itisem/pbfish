@@ -6,7 +6,7 @@ describe("reserved pbf field", () => {
 		expect(tester.value).toEqual(undefined);
 		tester.value = "Bujumbura";
 		expect(tester.value).toEqual(undefined);
-		expect(tester.urlEncode()).toEqual("");
-		expect(tester.arrayEncode()).toBeUndefined();
+		expect(tester.toUrl()).toEqual("");
+		expect(tester.toArray()).toBeUndefined();
 	});
 });

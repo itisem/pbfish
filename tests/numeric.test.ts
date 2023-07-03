@@ -15,7 +15,7 @@ import UInt64PBFField from "../parsers/uint64";
 
 function encodingTestValid(instance: SimplePBFField<number>){
 	instance.value = 100;
-	return instance.urlEncode();
+	return instance.toUrl();
 }
 
 describe("numeric fields", () => {
@@ -27,12 +27,12 @@ describe("numeric fields", () => {
 	test("value is returned normally in jsons", () => {
 		const tester = new UInt64PBFField();
 		tester.value = 10;
-		expect(tester.arrayEncode()).toEqual(10);
+		expect(tester.toArray()).toEqual(10);
 	});
-	test("value can be urlencoded", () => {
+	test("value can be toUrld", () => {
 		const options = {fieldNumber: 9};
 		const tester = new DoublePBFField(options);
-		expect(tester.urlEncode()).toEqual("");
+		expect(tester.toUrl()).toEqual("");
 		expect(encodingTestValid(new DoublePBFField(options))).toEqual("!9d100");
 		expect(encodingTestValid(new Fixed32PBFField(options))).toEqual("!9x100");
 		expect(encodingTestValid(new Fixed64PBFField(options))).toEqual("!9y100");
@@ -47,22 +47,22 @@ describe("numeric fields", () => {
 		expect(encodingTestValid(new UInt64PBFField(options))).toEqual("!9v100");
 	});
 	test("urlencoding returns the value", () => {
-		expect(new DoublePBFField().urlEncode()).toEqual("");
-		expect(new Fixed32PBFField().urlEncode()).toEqual("");
-		expect(new Fixed64PBFField().urlEncode()).toEqual("");
-		expect(new FloatPBFField().urlEncode()).toEqual("");
-		expect(new Int32PBFField().urlEncode()).toEqual("");
-		expect(new Int64PBFField().urlEncode()).toEqual("");
-		expect(new SFixed32PBFField().urlEncode()).toEqual("");
-		expect(new SFixed64PBFField().urlEncode()).toEqual("");
-		expect(new SInt32PBFField().urlEncode()).toEqual("");
-		expect(new SInt64PBFField().urlEncode()).toEqual("");
-		expect(new UInt32PBFField().urlEncode()).toEqual("");
-		expect(new UInt64PBFField().urlEncode()).toEqual("");
+		expect(new DoublePBFField().toUrl()).toEqual("");
+		expect(new Fixed32PBFField().toUrl()).toEqual("");
+		expect(new Fixed64PBFField().toUrl()).toEqual("");
+		expect(new FloatPBFField().toUrl()).toEqual("");
+		expect(new Int32PBFField().toUrl()).toEqual("");
+		expect(new Int64PBFField().toUrl()).toEqual("");
+		expect(new SFixed32PBFField().toUrl()).toEqual("");
+		expect(new SFixed64PBFField().toUrl()).toEqual("");
+		expect(new SInt32PBFField().toUrl()).toEqual("");
+		expect(new SInt64PBFField().toUrl()).toEqual("");
+		expect(new UInt32PBFField().toUrl()).toEqual("");
+		expect(new UInt64PBFField().toUrl()).toEqual("");
 	});
 	test("encoding throws when a field is required", () => {
 		const tester = new DoublePBFField({fieldNumber: 9, required: true});
-		expect(() => tester.urlEncode()).toThrow();
-		expect(() => tester.arrayEncode()).toThrow();
+		expect(() => tester.toUrl()).toThrow();
+		expect(() => tester.toArray()).toThrow();
 	})
 });

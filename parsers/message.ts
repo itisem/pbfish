@@ -75,10 +75,10 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		// the value of the field itself is how many values it contains, and then append the url encoding of those values
 		// don't include total count if the field number is unset
 		const fieldCountString = this.options.fieldNumber ? valuesThatExist.length.toString() : "";
-		return fieldCountString + valuesThatExist.map(([k, v]) => v.urlEncode()).join("");
+		return fieldCountString + valuesThatExist.map(([k, v]) => v.toUrl()).join("");
 	}
 
-	urlEncode(): string{
+	toUrl(): string{
 		this.validateValue();
 		const encodedValue = this.encodeValue();
 		if(encodedValue === "") return "";
@@ -87,11 +87,11 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		return delimiter + this.options.fieldNumber.toString() + "m" + encodedValue;
 	}
 
-	arrayEncode(): AnyEncodedValue{
+	toArray(): AnyEncodedValue{
 		this.validateValue();
 		let encodedValue: AnyEncodedValue = [];
 		for(let [k, v] of Object.entries(this._value)){
-			encodedValue[v.fieldNumber - 1] = v.arrayEncode();
+			encodedValue[v.fieldNumber - 1] = v.toArray();
 		}
 		return encodedValue;
 	}

@@ -36,27 +36,27 @@ describe("enum pbf fields", () => {
 	});
 	test("value can be returned to be prepared for json encoding", () => {
 		const tester = new EnumPBFField(baseFieldOptions);
-		expect(tester.arrayEncode()).toBeUndefined();
+		expect(tester.toArray()).toBeUndefined();
 		tester.value = "Tajikistan";
-		expect(tester.arrayEncode()).toEqual(42);
+		expect(tester.toArray()).toEqual(42);
 	});
-	test("value can be urlencoded", () => {
+	test("value can be toUrld", () => {
 		const tester = new EnumPBFField({...baseFieldOptions, fieldNumber: 3});
-		expect(tester.urlEncode()).toEqual("");
+		expect(tester.toUrl()).toEqual("");
 		tester.value = "Kazakhstan";
-		expect(tester.urlEncode()).toEqual("!3e2");
+		expect(tester.toUrl()).toEqual("!3e2");
 		const tester2 = new EnumPBFField({...baseFieldOptions, fieldNumber: 3, delimiter: "&"});
 		tester2.value = "Kazakhstan";
-		expect(tester2.urlEncode()).toEqual("&3e2");
+		expect(tester2.toUrl()).toEqual("&3e2");
 	});
 	test("urlencoding returns the value when field number is unset", () => {
 		const tester = new EnumPBFField(baseFieldOptions);
 		tester.value = "Uzbekistan";
-		expect(tester.urlEncode()).toEqual("1");
+		expect(tester.toUrl()).toEqual("1");
 	});
 	test("encoding throws when a field is required", () => {
 		const tester = new EnumPBFField({...baseFieldOptions, fieldNumber: 3, required: true});
-		expect(() => tester.urlEncode()).toThrow();
-		expect(() => tester.arrayEncode()).toThrow();
+		expect(() => tester.toUrl()).toThrow();
+		expect(() => tester.toArray()).toThrow();
 	});
 })

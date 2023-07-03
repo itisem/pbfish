@@ -20,11 +20,11 @@ export default class ReservedPBFField extends GenericPBFField<undefined>{
 		return;
 	}
 
-	urlEncode(){
+	toUrl(){
 		return "";
 	}
 
-	arrayEncode(){
+	toArray(){
 		return undefined;
 	}
 }

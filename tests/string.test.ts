@@ -10,36 +10,36 @@ describe("string pbf fields", () => {
 	});
 	test("value is returned normally when used in jsons", ()  => {
 		const tester = new StringPBFField();
-		expect(tester.arrayEncode()).toBeUndefined();
+		expect(tester.toArray()).toBeUndefined();
 		tester.value = "hello world";
-		expect(tester.arrayEncode()).toEqual("hello world");
+		expect(tester.toArray()).toEqual("hello world");
 		const tester2 = new Base64StringPBFField();
-		expect(tester2.arrayEncode()).toBeUndefined();
+		expect(tester2.toArray()).toBeUndefined();
 		tester2.value = "hello world";
-		expect(tester2.arrayEncode()).toEqual("hello world");
+		expect(tester2.toArray()).toEqual("hello world");
 	});
-	test("value can be urlencoded", () => {
+	test("value can be toUrld", () => {
 		const tester = new StringPBFField({fieldNumber: 3});
-		expect(tester.urlEncode()).toEqual("");
+		expect(tester.toUrl()).toEqual("");
 		tester.value = "hello world";
-		expect(tester.urlEncode()).toEqual("!3shello%20world");
+		expect(tester.toUrl()).toEqual("!3shello%20world");
 		tester.value = "hello!*world";
-		expect(tester.urlEncode()).toEqual("!3shello*21*2Aworld");
+		expect(tester.toUrl()).toEqual("!3shello*21*2Aworld");
 		const tester2 = new StringPBFField({fieldNumber: 3, delimiter: "&"});
 		tester2.value = "hello world";
-		expect(tester2.urlEncode()).toEqual("&3shello%20world");
+		expect(tester2.toUrl()).toEqual("&3shello%20world");
 		const tester3 = new Base64StringPBFField({fieldNumber: 3});
 		tester3.value = "hello world";
-		expect(tester3.urlEncode()).toEqual("!3zaGVsbG8gd29ybGQ")
+		expect(tester3.toUrl()).toEqual("!3zaGVsbG8gd29ybGQ")
 	});
 	test("urlencoding returns the value when field number is unset", () => {
 		const tester = new StringPBFField();
 		tester.value = "hi";
-		expect(tester.urlEncode()).toEqual("hi");
+		expect(tester.toUrl()).toEqual("hi");
 	});
 	test("encoding throws when a field is required", () => {
 		const tester = new StringPBFField({fieldNumber: 3, required: true});
-		expect(() => tester.urlEncode()).toThrow();
-		expect(() => tester.arrayEncode()).toThrow();
+		expect(() => tester.toUrl()).toThrow();
+		expect(() => tester.toArray()).toThrow();
 	});
 });

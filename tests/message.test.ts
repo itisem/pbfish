@@ -53,31 +53,31 @@ describe("message pbf fields", () => {
 		expect(task.value).toEqual(baseTask);
 	});
 	test("encoding does not work when a field number is unset", () => {
-		expect(() => task.arrayEncode()).toThrow();
-		expect(() => task.urlEncode()).toThrow();
+		expect(() => task.toArray()).toThrow();
+		expect(() => task.toUrl()).toThrow();
 	});
 	test("encoding works", () => {
 		const employeeArray = ["Alice Bob Citizen", "N'Djamena", undefined, 123456, 4];
 		const employeeString = "!1sAlice%20Bob%20Citizen!2sN'Djamena!4d123456!5e4";
-		expect(employee.arrayEncode()).toEqual(employeeArray);
-		expect(employee.urlEncode()).toEqual(employeeString);
+		expect(employee.toArray()).toEqual(employeeArray);
+		expect(employee.toUrl()).toEqual(employeeString);
 		employee.fieldNumber = 3;
-		expect(task.arrayEncode()).toEqual(["become president", true, employeeArray]);
-		expect(task.urlEncode()).toEqual("!1sbecome%20president!2btrue!3m4" + employeeString);
+		expect(task.toArray()).toEqual(["become president", true, employeeArray]);
+		expect(task.toUrl()).toEqual("!1sbecome%20president!2btrue!3m4" + employeeString);
 	});
 	test("encoding fails when a field number is duplicate", () => {
 		city.fieldNumber = 1;
-		expect(() => employee.arrayEncode()).toThrow();
-		expect(() => employee.urlEncode()).toThrow();
-		expect(() => task.arrayEncode()).toThrow();
-		expect(() => task.urlEncode()).toThrow();
+		expect(() => employee.toArray()).toThrow();
+		expect(() => employee.toUrl()).toThrow();
+		expect(() => task.toArray()).toThrow();
+		expect(() => task.toUrl()).toThrow();
 	});
 	test("undefined values work unless required", () => {
 		city.fieldNumber = 2;
 		city.value = undefined;
 		const employeeArray = ["Alice Bob Citizen", undefined, undefined, 123456, 4];
 		const employeeString = "!1sAlice%20Bob%20Citizen!4d123456!5e4";
-		expect(task.arrayEncode()).toEqual(["become president", true, employeeArray]);
-		expect(task.urlEncode()).toEqual("!1sbecome%20president!2btrue!3m3" + employeeString);
+		expect(task.toArray()).toEqual(["become president", true, employeeArray]);
+		expect(task.toUrl()).toEqual("!1sbecome%20president!2btrue!3m3" + employeeString);
 	});
 });

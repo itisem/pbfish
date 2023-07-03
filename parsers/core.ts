@@ -47,8 +47,8 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	}
 
 	abstract validateValue(value?: T): void;
-	abstract urlEncode(): void;
-	abstract arrayEncode(): V | undefined;
+	abstract toUrl(): void;
+	abstract toArray(): V | undefined;
 }
 
 // generic classes for pbf fields. should never be used on its own, only derived classes
@@ -84,7 +84,7 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 	// overwriting this method is enough, rather than overwriting the encoder itself
 	// url decoding is done in the message object itself
 	protected encodeValue(value?: T): string{
-		// no need to handle it in encodevalue since urlencode already handles it
+		// no need to handle it in encodevalue since toUrl already handles it
 		const realValue = value ?? this._value;
 		return realValue.toString();
 	}
@@ -97,7 +97,7 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 
 	// protobuf urls
 
-	urlEncode(): string{
+	toUrl(): string{
 		this.validateValue();
 		if(!this.options.fieldType) throw new Error("Please specify a field type before url encoding");
 		// for urlencoding, empty values can just be left out. DO NOT remove, or else encodeValue will have problems with undefined
@@ -111,7 +111,7 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 
 	// json protobuf formatting
 	// should never just return a number unless it's an enum
-	arrayEncode(): T | undefined{
+	toArray(): T | undefined{
 		// just prepares the value to be encoded with JSON.stringify
 		// does not actually do any encoding itself
 		this.validateValue();

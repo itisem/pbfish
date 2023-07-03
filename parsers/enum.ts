@@ -71,7 +71,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return realValue.toString();
 	}
 
-	urlEncode(): string{
+	toUrl(): string{
 		this.validateValue();
 		if(this._value === undefined) return "";
 		if(!this.options.fieldNumber){
@@ -81,7 +81,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return delimiter + this.options.fieldNumber.toString() + "e" + this.encodeValue();
 	}
 
-	arrayEncode(): number | undefined{
+	toArray(): number | undefined{
 		this.validateValue();
 		if(this._value === undefined) return undefined;
 		return this._value;
