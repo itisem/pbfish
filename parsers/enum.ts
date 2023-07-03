@@ -91,7 +91,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 			const fieldNumber = parseInt(matches[1], 10);
 			if(fieldNumber < 1) throw new Error("Invalid field number");
 			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
-			else this.options.fieldNumber = fieldNumber;
+			if(!this.options.fieldNumber) this.options.fieldNumber = fieldNumber;
 			if(matches[2] !== "e") throw new Error("Field types don't match");
 			newValue = Number(matches[3]);
 		}

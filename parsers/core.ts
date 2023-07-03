@@ -10,19 +10,28 @@ export interface PBFFieldOptions{
 
 export type SingleEncodedValue = number | string | boolean | undefined;
 
-export type AnyEncodedValue = SingleEncodedValue | Array<AnyEncodedValue | SingleEncodedValue>;
+export type EncodedValueArray = EncodedValueArray[] | SingleEncodedValue[];
+
+export type AnyEncodedValue = SingleEncodedValue | EncodedValueArray;
 
 export const defaultDelimiter = "!";
 
 // what a protobuf parser class should generally behave like
 export abstract class GenericPBFField<T, U = T, V = T>{
+	// used to ensure that field numbers don't change once added inside a message
+	protected fieldNumberIsLocked: boolean;
 	protected _value?: T;
 	protected options: GenericPBFFieldOptions;
 	constructor(options: GenericPBFFieldOptions){};
 	abstract set value(value: T | U | undefined);
 	abstract get value(): U;
 
+	lockFieldNumber(): void{
+		this.fieldNumberIsLocked = true;
+	}
+
 	set fieldNumber(newFieldNumber: number){
+		if(this.fieldNumberIsLocked) throw new Error("You cannot modify a field number once it has been added to a message");
 		if(!Number.isInteger(newFieldNumber)) throw new Error(`Invalid field number ${newFieldNumber}`);
 		if(newFieldNumber < 1) throw new Error(`Invalid field number ${newFieldNumber}`);
 		this.options.fieldNumber = newFieldNumber;
@@ -118,7 +127,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 			const fieldNumber = parseInt(matches[1], 10);
 			if(fieldNumber < 1) throw new Error("Invalid field number");
 			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
-			else this.options.fieldNumber = fieldNumber;
+			else this.fieldNumber = fieldNumber;
 			if(this.options.fieldType && this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
 			newValue = this.decodeValue(matches[3]);
 		}
