@@ -64,5 +64,16 @@ describe("numeric fields", () => {
 		const tester = new DoublePBFField({fieldNumber: 9, required: true});
 		expect(() => tester.toUrl()).toThrow();
 		expect(() => tester.toArray()).toThrow();
-	})
+	});
+	test("decoding works", () => {
+		const tester = new DoublePBFField({fieldNumber: 9});
+		tester.fromArray(10);
+		expect(tester.value).toEqual(10);
+		tester.fromUrl("11");
+		expect(tester.value).toEqual(11);
+		tester.fromUrl("!9d12");
+		expect(tester.value).toEqual(12);
+		expect(() => tester.fromUrl("!8d13")).toThrow();
+		expect(() => tester.fromUrl("!9c14")).toThrow();
+	});
 });

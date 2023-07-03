@@ -138,7 +138,21 @@ export class NumericPBFField extends SimplePBFField<number>{
 
 	fromUrl(value?: string){
 		if(!value) this._value = undefined;
-		const newValue = Number(value);
+		let newValue: number;
+		if(value.startsWith(this.options.delimiter ?? defaultDelimiter)){
+			const pattern = /^!([0-9]+)([a-z])([0-9]+)$/;
+			const matches = value.match(pattern);
+			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
+			const fieldNumber = parseInt(matches[1], 10);
+			if(fieldNumber < 1) throw new Error("Invalid field number");
+			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
+			else this.options.fieldNumber = fieldNumber;
+			if(this.options.fieldType && this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
+			newValue = Number(matches[3]);
+		}
+		else{
+			newValue = Number(value);
+		}
 		this.validateValue(newValue);
 		this._value = newValue;
 	}
