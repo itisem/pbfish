@@ -1,7 +1,7 @@
-import {SimplePBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
 
 // a pbf field with an int32 type (i)
-export default class Int32PBFField extends SimplePBFField<number>{
+export default class Int32PBFField extends NumericPBFField{
 	constructor(options?: PBFFieldOptions){
 		super(extendOptions("i", options));
 	}

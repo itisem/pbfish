@@ -23,8 +23,15 @@ export default class ReservedPBFField extends GenericPBFField<undefined>{
 	toUrl(){
 		return "";
 	}
+	fromUrl(){
+		return;
+	}
 
 	toArray(){
 		return undefined;
+	}
+
+	fromArray(){
+		return;
 	}
 }

@@ -1,8 +1,8 @@
-import {SimplePBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
 
 // a pbf field with an uint64 value (v)
 // WARNING: since ts / js does floats, not ints, large values will get changed!!
-export default class UInt64PBFField extends SimplePBFField<number>{
+export default class UInt64PBFField extends NumericPBFField{
 	constructor(options?: PBFFieldOptions){
 		super(extendOptions("v", options));
 	}

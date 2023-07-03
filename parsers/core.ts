@@ -47,12 +47,14 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	}
 
 	abstract validateValue(value?: T): void;
-	abstract toUrl(): void;
+	abstract toUrl(): string;
+	abstract fromUrl(value?: string): void;
 	abstract toArray(): V | undefined;
+	abstract fromArray(value?: V): void;
 }
 
 // generic classes for pbf fields. should never be used on its own, only derived classes
-export class SimplePBFField<T> extends GenericPBFField<T>{
+export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	constructor(options: GenericPBFFieldOptions){
 		super(options);
 		if(options.fieldNumber){
@@ -67,7 +69,7 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 
 	set value(value: T | undefined){
 		this.validateValue(value);
-		this._value = this.decodeValue(value);
+		this._value = value;
 	}
 
 	get value(): T{
@@ -89,11 +91,11 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 		return realValue.toString();
 	}
 
-	// does NOT handle full urls, just the decoding (for strings). only does T->T, since the only counterexample is enums
+	/*// does NOT handle full urls, just the decoding (for strings). only does T->T, since the only counterexample is enums
 	protected decodeValue(value?: T | null): T | undefined{
 		if(value === null) return undefined;
 		return value;
-	}
+	}*/
 
 	// protobuf urls
 
@@ -109,6 +111,8 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 		return delimiter + this.options.fieldNumber.toString() + this.options.fieldType + this.encodeValue();
 	}
 
+	// fromUrl needs to be specified within each class due to type conversion issues
+
 	// json protobuf formatting
 	// should never just return a number unless it's an enum
 	toArray(): T | undefined{
@@ -119,7 +123,25 @@ export class SimplePBFField<T> extends GenericPBFField<T>{
 		return this._value;
 	}
 
+	fromArray(value?: T){
+		this.validateValue(value);
+		this._value = value;
+	}
+
 	// json decoding is not needed since it's identical to the setter
+}
+
+export class NumericPBFField extends SimplePBFField<number>{
+	constructor(options: GenericPBFFieldOptions){
+		super(options);
+	}
+
+	fromUrl(value?: string){
+		if(!value) this._value = undefined;
+		const newValue = Number(value);
+		this.validateValue(newValue);
+		this._value = newValue;
+	}
 }
 
 export function extendOptions(fieldType: string, options: PBFFieldOptions){

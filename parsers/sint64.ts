@@ -1,9 +1,9 @@
-import {SimplePBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
 
 // a pbf field with a sint64 type (o)
 // for all intents and purposes, acts identical to int64 [for url and json encoding, which is what we do here]
 // WARNING: since ts / js does floats, not ints, large values will get changed!!
-export default class SInt64PBFField extends SimplePBFField<number>{
+export default class SInt64PBFField extends NumericPBFField{
 	constructor(options?: PBFFieldOptions){
 		super(extendOptions("o", options));
 	}
