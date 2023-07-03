@@ -14,14 +14,9 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	codes: PBFEnum[];
 
 	constructor(options: EnumPBFFieldOptions){
-		super(extendOptions("e", options));
 		const {codes, ...miscOptions} = options;
+		super(extendOptions("e", miscOptions));
 		this.codes = codes;
-		if(options.fieldNumber){
-			if(!Number.isInteger(options.fieldNumber)) throw new Error(`Invalid field number ${options.fieldNumber}`);
-			if(options.fieldNumber < 1) throw new Error(`Invalid field number ${options.fieldNumber}`);
-		}
-		this.options = {...miscOptions};
 		// since this is its own implementation, fieldType is just left to be its own thing
 	}
 
@@ -83,21 +78,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 
 	fromUrl(value?: string){
 		if(!value) this._value = undefined;
-		let newValue: number;
-		if(value.startsWith(this.options.delimiter ?? defaultDelimiter)){
-			const pattern = /^!([0-9]+)([a-z])(.*)$/;
-			const matches = value.match(pattern);
-			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
-			const fieldNumber = parseInt(matches[1], 10);
-			if(fieldNumber < 1) throw new Error("Invalid field number");
-			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
-			if(!this.options.fieldNumber) this.options.fieldNumber = fieldNumber;
-			if(matches[2] !== "e") throw new Error("Field types don't match");
-			newValue = Number(matches[3]);
-		}
-		else{
-			newValue = Number(value);
-		}
+		let newValue = Number(this.parseUrlCore(value));
 		this.validateValue(newValue);
 		this._value = newValue;
 	}

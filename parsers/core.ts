@@ -22,7 +22,16 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	protected fieldNumberIsLocked: boolean;
 	protected _value?: T;
 	protected options: GenericPBFFieldOptions;
-	constructor(options: GenericPBFFieldOptions){};
+	constructor(options: GenericPBFFieldOptions){
+		if(options.fieldNumber){
+			if(!Number.isInteger(options.fieldNumber)) throw new Error(`Invalid field number ${options.fieldNumber}`);
+			if(options.fieldNumber < 1) throw new Error(`Invalid field number ${options.fieldNumber}`);
+		}
+		if(options.fieldType){
+			if(options.fieldType.length !== 1) throw new Error(`Invalid field type ${options.fieldType}`);
+		}
+		this.options = options;
+	}
 	abstract set value(value: T | U | undefined);
 	abstract get value(): U;
 
@@ -55,6 +64,23 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		return this._value === undefined;
 	}
 
+	protected parseUrlCore(value?: string): string{
+		if(value === undefined || value === "") return;
+		const delimiter = this.options.delimiter ?? defaultDelimiter;
+		if(value.startsWith(delimiter)){
+			const pattern = new RegExp(`^\\${delimiter}([0-9]+)([a-z])(.*)$`);
+			const matches = value.match(pattern);
+			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
+			const fieldNumber = parseInt(matches[1], 10);
+			if(fieldNumber < 1) throw new Error("Invalid field number");
+			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
+			else this.fieldNumber = fieldNumber;
+			if(this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
+			return matches[3]
+		}
+		return value;
+	}
+
 	abstract validateValue(value?: T): void;
 	abstract toUrl(): string;
 	abstract fromUrl(value?: string): void;
@@ -66,14 +92,6 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	constructor(options: GenericPBFFieldOptions){
 		super(options);
-		if(options.fieldNumber){
-			if(!Number.isInteger(options.fieldNumber)) throw new Error(`Invalid field number ${options.fieldNumber}`);
-			if(options.fieldNumber < 1) throw new Error(`Invalid field number ${options.fieldNumber}`);
-		}
-		if(options.fieldType){
-			if(options.fieldType.length !== 1) throw new Error(`Invalid field type ${options.fieldType}`);
-			this.options = options;
-		}
 	}
 
 	set value(value: T | undefined){
@@ -119,21 +137,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	fromUrl(value?: string){
 		if(!value) this._value = undefined;
-		let newValue: T;
-		if(value.startsWith(this.options.delimiter ?? defaultDelimiter)){
-			const pattern = /^!([0-9]+)([a-z])(.*)$/;
-			const matches = value.match(pattern);
-			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
-			const fieldNumber = parseInt(matches[1], 10);
-			if(fieldNumber < 1) throw new Error("Invalid field number");
-			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
-			else this.fieldNumber = fieldNumber;
-			if(this.options.fieldType && this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
-			newValue = this.decodeValue(matches[3]);
-		}
-		else{
-			newValue = this.decodeValue(value);
-		}
+		let newValue = this.decodeValue(this.parseUrlCore(value));
 		this.validateValue(newValue);
 		this._value = newValue;
 	}
