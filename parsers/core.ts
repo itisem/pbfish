@@ -31,6 +31,7 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		if(options.fieldType){
 			if(options.fieldType.length !== 1) throw new Error(`Invalid field type ${options.fieldType}`);
 		}
+		if(options.repeated === undefined) options.repeated = false;
 		this.options = options;
 	}
 	abstract set value(value: T | U | T[] | U[] | undefined);
@@ -140,7 +141,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	fromUrl(value?: string){
 		if(this.options.repeated){
-			throw new Error("repeated fields cannot be urlencoded");
+			throw new Error("Repeated fields cannot be urlencoded");
 		}
 		if(!value) this._value = undefined;
 		let newValue = this.decodeValue(this.parseUrlCore(value));
@@ -178,6 +179,6 @@ export class NumericPBFField extends SimplePBFField<number>{
 
 export function extendOptions(fieldType: string, options: PBFFieldOptions){
 	if(!options) return {fieldType};
-	const {fieldNumber, required, delimiter} = options;
-	return {fieldNumber, required, delimiter, fieldType};
+	const {fieldNumber, required, delimiter, repeated} = options;
+	return {fieldNumber, required, delimiter, repeated, fieldType};
 }

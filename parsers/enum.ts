@@ -29,7 +29,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 			case "string":
 				return this.lookupValue(value);
 			default:
-				throw new Error("invalid type for value");
+				throw new Error("Invalid type for value");
 		}
 	}
 
@@ -39,7 +39,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 			return;
 		}
 		if(Array.isArray(value)){
-			if(!this.options.repeated) throw new Error("non-repeated fields cannot have an array value");
+			if(!this.options.repeated) throw new Error("Non-repeated fields cannot have an array value");
 			else{
 				if(value.length === 0){
 					this._value = undefined;
@@ -63,11 +63,11 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	get value(): string | string[]{
 		// _value should always be an array if repeated, and not an array if not repeated
 		if(this.options.repeated){
-			if(!Array.isArray(this._value)) throw new Error("something extremely unusual happened, and the value got corrupted");
+			if(!Array.isArray(this._value)) throw new Error("Something extremely unusual happened, and the value got corrupted");
 			else return this._value.map(x => this.lookupCode(x));
 		}
 		else{
-			if(Array.isArray(this._value)) throw new Error("something extremely unusual happened, and the value got corrupted");
+			if(Array.isArray(this._value)) throw new Error("Something extremely unusual happened, and the value got corrupted");
 			else return this.lookupCode(this._value);
 		}
 	}
@@ -99,6 +99,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	}
 
 	toUrl(): string{
+		if(this.options.repeated) throw new Error("Repeated values cannot be urlencoded");
 		this.validateValue();
 		if(this._value === undefined) return "";
 		if(!this.options.fieldNumber){
@@ -109,7 +110,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	}
 
 	fromUrl(value?: string){
-		if(this.options.repeated || Array.isArray(this._value)) throw new Error("repeated values cannot be urlencoded");
+		if(this.options.repeated || Array.isArray(this._value)) throw new Error("Repeated values cannot be urlencoded");
 		if(!value) this._value = undefined;
 		let newValue = Number(this.parseUrlCore(value));
 		this.validateValue(newValue);
@@ -122,8 +123,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return this._value;
 	}
 
-	fromArray(value?: number){
-		this.validateValue(value);
-		this._value = value;
+	fromArray(value?: number | number[]){
+		this.value = value;
 	}
 }
