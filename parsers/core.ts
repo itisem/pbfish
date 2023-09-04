@@ -5,6 +5,7 @@ export interface GenericPBFFieldOptions extends PBFFieldOptions{
 export interface PBFFieldOptions{
 	fieldNumber?: number;
 	required?: boolean;
+	repeated?: boolean;
 	delimiter?: string;
 };
 
@@ -20,7 +21,7 @@ export const defaultDelimiter = "!";
 export abstract class GenericPBFField<T, U = T, V = T>{
 	// used to ensure that field numbers don't change once added inside a message
 	protected fieldNumberIsLocked: boolean;
-	protected _value?: T;
+	protected _value?: T | T[];
 	protected options: GenericPBFFieldOptions;
 	constructor(options: GenericPBFFieldOptions){
 		if(options.fieldNumber){
@@ -32,8 +33,8 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		}
 		this.options = options;
 	}
-	abstract set value(value: T | U | undefined);
-	abstract get value(): U;
+	abstract set value(value: T | U | T[] | U[] | undefined);
+	abstract get value(): U | U[];
 
 	lockFieldNumber(): void{
 		this.fieldNumberIsLocked = true;
@@ -80,12 +81,11 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		}
 		return value;
 	}
-
-	abstract validateValue(value?: T): void;
+	abstract validateValue(value?: T | T[]): void;
 	abstract toUrl(): string;
 	abstract fromUrl(value?: string): void;
-	abstract toArray(): V | undefined;
-	abstract fromArray(value?: V): void;
+	abstract toArray(): V | V[] | undefined;
+	abstract fromArray(value?: V | V[]): void;
 }
 
 // generic classes for pbf fields. should never be used on its own, only derived classes
@@ -94,17 +94,17 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		super(options);
 	}
 
-	set value(value: T | undefined){
+	set value(value: T | T[] | undefined){
 		this.validateValue(value);
 		this._value = value;
 	}
 
-	get value(): T{
+	get value(): T | T[]{
 		return this._value;
 	}
 
 	// checks whether a value is valid. overwrite for derived classes
-	validateValue(value?: T): void{
+	validateValue(value?: T | T[]): void{
 		const realValue = value ?? this._value;
 		if(this.options?.required && realValue === undefined) throw new Error("A required field cannot have an undefined value");
 	}
@@ -112,7 +112,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	// encoders and decoders for URL-encoded stuff. only really just strings
 	// overwriting this method is enough, rather than overwriting the encoder itself
 	// url decoding is done in the message object itself
-	protected encodeValue(value?: T): string{
+	protected encodeValue(value?: T | T[]): string{
 		// no need to handle it in encodevalue since toUrl already handles it
 		const realValue = value ?? this._value;
 		return realValue.toString();
@@ -124,6 +124,9 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	// protobuf urls
 
 	toUrl(): string{
+		if(this.options.repeated){
+			throw new Error("repeated fields cannot be urlencoded");
+		}
 		this.validateValue();
 		if(!this.options.fieldType) throw new Error("Please specify a field type before url encoding");
 		// for urlencoding, empty values can just be left out. DO NOT remove, or else encodeValue will have problems with undefined
@@ -136,6 +139,9 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	}
 
 	fromUrl(value?: string){
+		if(this.options.repeated){
+			throw new Error("repeated fields cannot be urlencoded");
+		}
 		if(!value) this._value = undefined;
 		let newValue = this.decodeValue(this.parseUrlCore(value));
 		this.validateValue(newValue);
@@ -144,7 +150,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	// json protobuf formatting
 	// should never just return a number unless it's an enum
-	toArray(): T | undefined{
+	toArray(): T | T[] | undefined{
 		// just prepares the value to be encoded with JSON.stringify
 		// does not actually do any encoding itself
 		this.validateValue();
@@ -152,7 +158,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		return this._value;
 	}
 
-	fromArray(value?: T){
+	fromArray(value?: T | T[]){
 		this.validateValue(value);
 		this._value = value;
 	}
