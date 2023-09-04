@@ -1,9 +1,5 @@
 import {GenericPBFField, extendOptions, PBFFieldOptions, defaultDelimiter} from "./core";
 
-export interface EnumPBFFieldOptions extends PBFFieldOptions{
-	codes: PBFEnum[];
-};
-
 export interface PBFEnum{
 	code: number;
 	value: string;
@@ -13,9 +9,8 @@ export interface PBFEnum{
 export default class EnumPBFField extends GenericPBFField<number, string>{
 	codes: PBFEnum[];
 
-	constructor(options: EnumPBFFieldOptions){
-		const {codes, ...miscOptions} = options;
-		super(extendOptions("e", miscOptions));
+	constructor(options: PBFFieldOptions, codes: PBFEnum[]){
+		super(extendOptions("e", options));
 		this.codes = codes;
 		// since this is its own implementation, fieldType is just left to be its own thing
 	}

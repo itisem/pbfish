@@ -1,10 +1,17 @@
 import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, defaultDelimiter} from "./core";
 
-import ReservedPBFField from "./reserved";
+export type PBFField = GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, AnyEncodedValue | MessagePBFFieldValue , AnyEncodedValue>;
 
 export interface MessagePBFFieldObject{
-	[key: string]: GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, AnyEncodedValue | MessagePBFFieldValue , AnyEncodedValue>
+	[key: string]: PBFField;
 };
+
+export interface MessagePBFFieldDescriptor{
+	[key: string]: {
+		options: PBFFieldOptions;
+		factory: (options: PBFFieldOptions) => PBFField;
+	}
+}
 
 export interface MessagePBFFieldValue{
 	[key: string]: AnyEncodedValue | MessagePBFFieldValue;
@@ -23,17 +30,19 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 	// this should not break unless horribly misused since field numbers get locked once added inside a message
 	indices: string[];
 
-	constructor(options: PBFFieldOptions, baseValues: MessagePBFFieldObject){
+	constructor(options: PBFFieldOptions, baseValues: MessagePBFFieldDescriptor){
 		super(extendOptions("m", options));
-		this._value = baseValues;
+		this._value = {};
 		this.options = options ?? {};
 		this.indices = [];
+		let i = 0;
 		for(let [k, v] of Object.entries(baseValues)){
-			const fieldNumber = v.fieldNumber;
+			const fieldNumber = v.options.fieldNumber;
 			if(fieldNumber === undefined) throw new Error("All field numbers must exist");
 			if(!this.indices[fieldNumber]) this.indices[fieldNumber - 1] = k;
 			else throw new Error("All field numbers must be unique");
-			v.lockFieldNumber();
+			this._value[k] = v.factory(options);
+			this._value[k].lockFieldNumber();
 		}
 	}
 
@@ -124,7 +133,6 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 	}
 
 	fromUrl(value?: NestedStringArray){
-		console.log(value);
 		if(value === undefined || value === "") this.value = undefined;
 		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		// the url needs to be broken into chunks
