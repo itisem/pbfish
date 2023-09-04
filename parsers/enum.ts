@@ -20,24 +20,56 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		// since this is its own implementation, fieldType is just left to be its own thing
 	}
 
-	set value(value: number | string | undefined){
+	protected setValueCore(value: number | string){
 		switch(typeof value){
-			case "undefined":
-				this._value = undefined;
-				break;
 			case "number":
 				// ensuring that the code is valid
 				this.lookupCode(value);
-				this._value = value;
-				break;
+				return value;
 			case "string":
-				this._value = this.lookupValue(value);
-				break;
+				return this.lookupValue(value);
+			default:
+				throw new Error("invalid type for value");
 		}
 	}
 
-	get value(): string{
-		return this.lookupCode(this._value);
+	set value(value: number | number[] | string | string[] | undefined){
+		if(value === undefined){
+			this._value = undefined;
+			return;
+		}
+		if(Array.isArray(value)){
+			if(!this.options.repeated) throw new Error("non-repeated fields cannot have an array value");
+			else{
+				if(value.length === 0){
+					this._value = undefined;
+				}
+				else{
+					let tmpValue = [];
+					this._value = value.map(x => this.setValueCore(x));
+				}
+			}
+		}
+		else{
+			if(this.options.repeated){
+				this._value = [this.setValueCore(value)];
+			}
+			else{
+				this._value = this.setValueCore(value);
+			}
+		}
+	}
+
+	get value(): string | string[]{
+		// _value should always be an array if repeated, and not an array if not repeated
+		if(this.options.repeated){
+			if(!Array.isArray(this._value)) throw new Error("something extremely unusual happened, and the value got corrupted");
+			else return this._value.map(x => this.lookupCode(x));
+		}
+		else{
+			if(Array.isArray(this._value)) throw new Error("something extremely unusual happened, and the value got corrupted");
+			else return this.lookupCode(this._value);
+		}
 	}
 
 	protected lookupCode(code: number): string{
@@ -77,13 +109,14 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	}
 
 	fromUrl(value?: string){
+		if(this.options.repeated || Array.isArray(this._value)) throw new Error("repeated values cannot be urlencoded");
 		if(!value) this._value = undefined;
 		let newValue = Number(this.parseUrlCore(value));
 		this.validateValue(newValue);
 		this._value = newValue;
 	}
 
-	toArray(): number | undefined{
+	toArray(): number | number[] | undefined{
 		this.validateValue();
 		if(this._value === undefined) return undefined;
 		return this._value;
