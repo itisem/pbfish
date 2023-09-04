@@ -8,5 +8,6 @@ describe("reserved pbf field", () => {
 		expect(tester.value).toEqual(undefined);
 		expect(tester.toUrl()).toEqual("");
 		expect(tester.toArray()).toBeUndefined();
+		expect(() => new ReservedPBFField({repeated: true})).toThrow();
 	});
 });
