@@ -65,16 +65,75 @@ class Task extends MessagePBFField{
 	}
 }
 
+const employeeBaseDescription = {
+	name: "John",
+	city: "N'Djamena",
+	salary: 12345,
+	occupation: "dentist"
+};
+const employeeDescription = {...employeeBaseDescription, occupation: "dentist"};
+const employeeEnumDescription = {...employeeBaseDescription, occupation: 2};
+const employeeInvalidDescription = {...employeeBaseDescription, occupation: 3};
+const employeeArray = ["John", "N'Djamena", undefined, 12345, 2];
+const employeeUrl = "!1sJohn!2sN'Djamena!4d12345!5e2";
+
+const taskBaseDescription = {
+	title: "Become president",
+	difficult: true
+}
+const taskDescription = {...taskBaseDescription, employee: employeeDescription};
+const taskInvalidDescription = {...taskBaseDescription, employee: employeeInvalidDescription};
+const taskArray = ["Become president", employeeArray, true];
+const taskUrl = "!1sBecome%20president!2m4!1sJohn!2sN'Djamena!4d12345!5e2!3btrue";
+
 describe("simple message pbf fields", () => {
-	test("constructing pbf fields works", () => {
-		const johnDescription = {
-			name: "John",
-			city: "N'Djamena",
-			salary: 12345,
-			occupation: "dentist"
-		};
+	test("pbf fields works", () => {	
 		const john = new Employee();
-		john.value = johnDescription;
-		expect(john.value).toEqual(johnDescription);
-	})
-})
+		john.value = employeeDescription;
+		expect(john.value).toEqual(employeeDescription);
+		const johnTheSecond = new Employee();
+		johnTheSecond.value = employeeEnumDescription;
+		expect(johnTheSecond.value).toEqual(employeeDescription);
+		expect(() => john.value = employeeInvalidDescription).toThrow();
+		const presidency = new Task();
+		presidency.value = taskDescription;
+		expect(presidency.value).toEqual(taskDescription);
+		expect(() => presidency.value = taskInvalidDescription).toThrow();
+	});
+
+	test("loading from arrays works", () => {
+		const john = new Employee();
+		john.fromArray(employeeArray);
+		expect(john.value).toEqual(employeeDescription);
+		const presidency = new Task();
+		presidency.fromArray(taskArray);
+		expect(presidency.value).toEqual(taskDescription);
+	});
+
+	test("loading from urls works", () => {
+		const john = new Employee();
+		john.fromUrl(employeeUrl);
+		expect(john.value).toEqual(employeeDescription);
+		const presidency = new Task();
+		presidency.fromUrl(taskUrl);
+		expect(presidency.value).toEqual(taskDescription);
+	});
+
+	test("saving to arrays works", () => {
+		const john = new Employee();
+		john.value = employeeDescription;
+		expect(john.toArray()).toEqual(employeeArray);
+		const presidency = new Task();
+		presidency.value = taskDescription;
+		expect(presidency.toArray()).toEqual(taskArray);
+	});
+
+	test("saving to urls works", () => {
+		const john = new Employee();
+		john.value = employeeDescription;
+		expect(john.toUrl()).toEqual(employeeUrl);
+		const presidency = new Task();
+		presidency.value = taskDescription;
+		expect(presidency.toUrl()).toEqual(taskUrl);
+	});
+});

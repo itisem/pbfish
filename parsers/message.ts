@@ -41,7 +41,7 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 			if(fieldNumber === undefined) throw new Error("All field numbers must exist");
 			if(!this.indices[fieldNumber]) this.indices[fieldNumber - 1] = k;
 			else throw new Error("All field numbers must be unique");
-			this._value[k] = v.factory(options);
+			this._value[k] = v.factory(v.options);
 			this._value[k].lockFieldNumber();
 		}
 	}

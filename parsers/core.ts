@@ -11,7 +11,7 @@ export interface PBFFieldOptions{
 
 export type SingleEncodedValue = number | string | boolean | undefined;
 
-export type EncodedValueArray = EncodedValueArray[] | SingleEncodedValue[];
+export type EncodedValueArray = (EncodedValueArray | SingleEncodedValue)[];
 
 export type AnyEncodedValue = SingleEncodedValue | EncodedValueArray;
 
@@ -75,7 +75,9 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
 			const fieldNumber = parseInt(matches[1], 10);
 			if(fieldNumber < 1) throw new Error("Invalid field number");
+			// this should never occur, unless things were constructed in an unfathomably weird manner
 			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
+			// this should also not happen, since almost all parsing should come from inside a message
 			else if(!this.options.fieldNumber) this.fieldNumber = fieldNumber;
 			if(this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
 			return matches[3]
