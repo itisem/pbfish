@@ -7,6 +7,12 @@ describe("string pbf fields", () => {
 		expect(tester.value).toBeUndefined();
 		tester.value = "hello world";
 		expect(tester.value).toEqual("hello world");
+		const repeatedTester = new StringPBFField({repeated: true});
+		expect(repeatedTester.value).toBeUndefined();
+		repeatedTester.value = "hello world";
+		expect(repeatedTester.value).toEqual(["hello world"]);
+		repeatedTester.value = ["hello", "world"];
+		expect(repeatedTester.value).toEqual(["hello", "world"]);
 	});
 	test("value is returned normally when used in jsons", ()  => {
 		const tester = new StringPBFField();
@@ -17,6 +23,9 @@ describe("string pbf fields", () => {
 		expect(tester2.toArray()).toBeUndefined();
 		tester2.value = "hello world";
 		expect(tester2.toArray()).toEqual("hello world");
+		const repeatedTester = new Base64StringPBFField({repeated: true});
+		repeatedTester.value = "hello world";
+		expect(repeatedTester.toArray()).toEqual(["hello world"]);
 	});
 	test("value can be toUrld", () => {
 		const tester = new StringPBFField({fieldNumber: 3});
@@ -31,6 +40,9 @@ describe("string pbf fields", () => {
 		const tester3 = new Base64StringPBFField({fieldNumber: 3});
 		tester3.value = "hello world";
 		expect(tester3.toUrl()).toEqual("!3zaGVsbG8gd29ybGQ")
+		const repeatedTester = new StringPBFField({repeated: true});
+		repeatedTester.value = "hello world";
+		expect(() => repeatedTester.toUrl()).toThrow();
 	});
 	test("urlencoding returns the value when field number is unset", () => {
 		const tester = new StringPBFField();
@@ -55,5 +67,11 @@ describe("string pbf fields", () => {
 		const tester2 = new Base64StringPBFField({fieldNumber: 3});
 		tester2.fromUrl("!3zaGVsbG8gd29ybGQ");
 		expect(tester2.value).toEqual("hello world")
+		const repeatedTester = new StringPBFField({repeated: true, fieldNumber: 3});
+		repeatedTester.fromArray("hello world");
+		expect(repeatedTester.value).toEqual(["hello world"]);
+		repeatedTester.fromArray(["hello", "world"])
+		expect(repeatedTester.value).toEqual(["hello", "world"]);
+		expect(() => repeatedTester.fromUrl("!3sNICE")).toThrow()
 	});
 });
