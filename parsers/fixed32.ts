@@ -7,12 +7,11 @@ export default class Fixed32PBFField extends NumericPBFField{
 		super(extendOptions("x", options));
 	}
 
-	validateValue(value?: number): void{
-		const realValue = value ?? this._value;
-		super.validateValue(realValue);
-		if(realValue === undefined) return;
-		if(!Number.isInteger(realValue)) throw new Error(`Invalid value for fixed32: ${realValue}`);
-		if(realValue < 0) throw new Error(`Invalid value for fixed32: ${realValue}`);
-		if(realValue > 4294967295) throw new Error(`Invalid value for fixed32: ${realValue}`);
+	validateValue(value?: number | number[]){
+		this.validateValueCore(value, (v: number) => {
+			if(!Number.isInteger(v)) throw new Error(`Invalid value for fixed32: ${v}`);
+			if(v < 0) throw new Error(`Invalid value for fixed32: ${v}`);
+			if(v > 4294967295) throw new Error(`Invalid value for fixed32: ${v}`);
+		});
 	}
 }

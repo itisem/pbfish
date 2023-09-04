@@ -7,12 +7,11 @@ export default class SInt32PBFField extends NumericPBFField{
 		super(extendOptions("n", options));
 	}
 
-	validateValue(value?: number): void{
-		const realValue = value ?? this._value;
-		super.validateValue(realValue);
-		if(realValue === undefined) return;
-		if(!Number.isInteger(realValue)) throw new Error(`Invalid value for sint32: ${realValue}`);
-		if(realValue < -2147483648) throw new Error(`Invalid value for sint32: ${realValue}`);
-		if(realValue > 2147483647) throw new Error(`Invalid value for sint32: ${realValue}`);
+	validateValue(value?: number | number[]){
+		this.validateValueCore(value, (v: number) => {
+			if(!Number.isInteger(v)) throw new Error(`Invalid value for int32: ${v}`);
+			if(v < -2147483648) throw new Error(`Invalid value for int32: ${v}`);
+			if(v > 2147483647) throw new Error(`Invalid value for int32: ${v}`);
+		});
 	}
 }

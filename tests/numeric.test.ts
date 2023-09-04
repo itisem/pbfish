@@ -23,11 +23,23 @@ describe("numeric fields", () => {
 		const tester = new DoublePBFField();
 		tester.value = 2;
 		expect(tester.value).toEqual(2);
+		const errorTester = new Int32PBFField();
+		expect(() => errorTester.value = 3147483648).toThrow();
+		const repeatedTester = new DoublePBFField({repeated: true});
+		repeatedTester.value = 2;
+		expect(repeatedTester.value).toEqual([2]);
+		repeatedTester.value = [2, 3];
+		expect(repeatedTester.value).toEqual([2, 3]);
 	});
 	test("value is returned normally in jsons", () => {
 		const tester = new UInt64PBFField();
 		tester.value = 10;
 		expect(tester.toArray()).toEqual(10);
+		const repeatedTester = new DoublePBFField({repeated: true});
+		repeatedTester.value = 2;
+		expect(repeatedTester.toArray()).toEqual([2]);
+		repeatedTester.value = [2, 3];
+		expect(repeatedTester.toArray()).toEqual([2, 3]);
 	});
 	test("value can be toUrld", () => {
 		const options = {fieldNumber: 9};
@@ -45,6 +57,9 @@ describe("numeric fields", () => {
 		expect(encodingTestValid(new SInt64PBFField(options))).toEqual("!9o100");
 		expect(encodingTestValid(new UInt32PBFField(options))).toEqual("!9u100");
 		expect(encodingTestValid(new UInt64PBFField(options))).toEqual("!9v100");
+		const repeatedTester = new DoublePBFField({repeated: true});
+		repeatedTester.value = 2;
+		expect(() => repeatedTester.toUrl()).toThrow();
 	});
 	test("urlencoding returns the value", () => {
 		expect(new DoublePBFField().toUrl()).toEqual("");
@@ -64,6 +79,8 @@ describe("numeric fields", () => {
 		const tester = new DoublePBFField({fieldNumber: 9, required: true});
 		expect(() => tester.toUrl()).toThrow();
 		expect(() => tester.toArray()).toThrow();
+		const repeatedTester = new DoublePBFField({fieldNumber: 9, required: true});
+		expect(() => repeatedTester.toArray()).toThrow();
 	});
 	test("decoding works", () => {
 		const tester = new DoublePBFField({fieldNumber: 9});
@@ -75,5 +92,11 @@ describe("numeric fields", () => {
 		expect(tester.value).toEqual(12);
 		expect(() => tester.fromUrl("!8d13")).toThrow();
 		expect(() => tester.fromUrl("!9c14")).toThrow();
+		const repeatedTester = new DoublePBFField({repeated: true, fieldNumber: 9});
+		repeatedTester.fromArray(10);
+		expect(repeatedTester.value).toEqual([10]);
+		repeatedTester.fromArray([10, 11]);
+		expect(repeatedTester.value).toEqual([10, 11]);
+		expect(() => repeatedTester.fromUrl("!9d12")).toThrow();
 	});
 });

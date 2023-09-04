@@ -97,7 +97,9 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	set value(value: T | T[] | undefined){
 		this.validateValue(value);
-		this._value = value;
+		// T is never an array type for simple pbf fields, so checking whether it is or isn't an array is more than enough for conversion
+		if(this.options.repeated && !Array.isArray(value)) this._value = [value];
+		else this._value = value;
 	}
 
 	get value(): T | T[]{
@@ -106,6 +108,8 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	// checks whether a value is valid. overwrite for derived classes
 	validateValue(value?: T | T[]): void{
+		// T is never an array type for simple pbf fields, so this check should eliminate a lot of the problems
+		if(!this.options.repeated && Array.isArray(value)) throw new Error("Non-repeated fields cannot have an array value");
 		const realValue = value ?? this._value;
 		if(this.options?.required && realValue === undefined) throw new Error("A required field cannot have an undefined value");
 	}
@@ -125,9 +129,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	// protobuf urls
 
 	toUrl(): string{
-		if(this.options.repeated){
-			throw new Error("repeated fields cannot be urlencoded");
-		}
+		if(this.options.repeated) throw new Error("Repeated fields cannot be urlencoded");
 		this.validateValue();
 		if(!this.options.fieldType) throw new Error("Please specify a field type before url encoding");
 		// for urlencoding, empty values can just be left out. DO NOT remove, or else encodeValue will have problems with undefined
@@ -140,9 +142,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	}
 
 	fromUrl(value?: string){
-		if(this.options.repeated){
-			throw new Error("Repeated fields cannot be urlencoded");
-		}
+		if(this.options.repeated) throw new Error("Repeated fields cannot be urlencoded");
 		if(!value) this._value = undefined;
 		let newValue = this.decodeValue(this.parseUrlCore(value));
 		this.validateValue(newValue);
@@ -160,8 +160,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	}
 
 	fromArray(value?: T | T[]){
-		this.validateValue(value);
-		this._value = value;
+		this.value = value;
 	}
 
 	// json decoding is not needed since it's identical to the setter
@@ -174,6 +173,19 @@ export class NumericPBFField extends SimplePBFField<number>{
 
 	decodeValue(value?: string): number | undefined{
 		return (value === "" || value === undefined) ? undefined : Number(value);
+	}
+
+	protected validateValueCore(value: number | number[] | undefined, additionalValidations: (value?: number) => void){
+		const realValue = value ?? this._value;
+		super.validateValue(realValue);
+		if(realValue === undefined) return;
+		// super already checks whether the array is a valid value
+		if(Array.isArray(realValue)) realValue.forEach(item => additionalValidations(item));
+		else additionalValidations(realValue);
+	}
+
+	validateValue(value?: number | number[]): void{
+		this.validateValueCore(value, (v: number) => null);
 	}
 }
 
