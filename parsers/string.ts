@@ -18,6 +18,6 @@ export default class StringPBFField extends SimplePBFField<string>{
 		if(value === undefined) return undefined;
 		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		const encodedDelimiter = delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
-		return value.replaceAll(encodedDelimiter, delimiter).replaceAll("*2A", "*");
+		return decodeURIComponent(value.replaceAll(encodedDelimiter, delimiter).replaceAll("*2A", "*"));
 	}
 }
