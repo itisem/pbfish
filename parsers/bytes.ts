@@ -7,8 +7,9 @@ export default class BytesPBFField extends SimplePBFField<Uint8Array>{
 		super(extendOptions("b", options));
 	}
 
-	decodeValue(){
+	decodeValue(value?: string): Uint8Array{
 		console.warn(bytesErrorMessage)
+		return new Uint8Array();
 	}
 
 	fromUrl(){

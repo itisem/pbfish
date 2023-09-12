@@ -1,5 +1,24 @@
 import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, defaultDelimiter} from "./core";
 
+// all other parsers, to be used for .from()
+import BoolPBFField from "./bool";
+import BytesPBFField from "./bytes";
+import DoublePBFField from "./double";
+import EnumPBFField from "./enum";
+import Fixed32PBFField from "./fixed32";
+import Fixed64PBFField from "./fixed64";
+import FloatPBFField from "./float";
+import Int32PBFField from "./int32";
+import Int64PBFField from "./int64";
+import SFixed32PBFField from "./sfixed32";
+import SFixed64PBFField from "./sfixed64";
+import SInt32PBFField from "./sint32";
+import SInt64PBFField from "./sint64";
+import StringPBFField from "./string";
+import UInt32PBFField from "./uint32";
+import UInt64PBFField from "./uint64";
+
+// full descriptions of valid pbf fields and baseValues. primarily used for manually made classes
 export type PBFField = GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, AnyEncodedValue | MessagePBFFieldValue , AnyEncodedValue>;
 
 export interface MessagePBFFieldObject{
@@ -19,11 +38,32 @@ export interface MessagePBFFieldValue{
 
 export type NestedStringArray = string | undefined | NestedStringArray[];
 
+// interface used temporarily while parsing values
 interface SimpleValue{
 	index: number;
 	letter: string;
 	value: string | SimpleValue[];
 };
+
+// the key format of a protobuf definition. used in .from()
+export interface DescriptionObj{
+	[key: string]: CoreDefinition;
+};
+
+interface CoreDefinition{
+	id: number;
+	type: string;
+	// only exists as "required" and "repeated"
+	rule?: string;
+	// used only for message fields
+	fields?: DescriptionObj;
+	// used only for enum fields
+	values?: EnumDefinitionObj; 
+}
+
+interface EnumDefinitionObj{
+	[key: string]: number;
+}
 
 export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObject, MessagePBFFieldValue, EncodedValueArray>{
 	// store the indices of everything in here for easier access in url / array decoding
@@ -39,9 +79,103 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		for(let [k, v] of Object.entries(baseValues)){
 			const fieldNumber = v.options.fieldNumber;
 			if(fieldNumber === undefined) throw new Error("All field numbers must exist");
-			if(!this.indices[fieldNumber]) this.indices[fieldNumber - 1] = k;
+			if(!this.indices[fieldNumber - 1]) this.indices[fieldNumber - 1] = k;
 			else throw new Error("All field numbers must be unique");
 			this._value[k] = v.factory(v.options);
+			// field numbers should never be manually messed with
+			this._value[k].lockFieldNumber();
+		}
+	}
+
+	private ruleCheck(rule: string | undefined, against: string){
+		return (rule ?? "").includes(against);
+	}
+
+	from(definition: DescriptionObj){
+		// assumes that all values have been adequately replaced already, and does no lookup here
+		for(let [k, v] of Object.entries(definition)){
+			const index = v.id;
+			if(!this.indices[index - 1]) this.indices[index - 1] = k;
+			else throw new Error("All field numbers must be unique");
+			// all pbf fields have the same options here
+			const fieldOptions = {
+				fieldNumber: v.id,
+				// using .includes since something can be both repeated and required
+				required: (v.rule ?? "").includes("required"),
+				repeated: (v.rule ?? "").includes("repeated")
+			};
+			switch(v.type){
+				case "bool":
+					this._value[k] = new BoolPBFField(fieldOptions);
+					break;
+				case "bytes":
+					this._value[k] = new BytesPBFField(fieldOptions);
+					break;
+				case "double":
+					this._value[k] = new DoublePBFField(fieldOptions);
+					break;
+				case "fixed32":
+					this._value[k] = new Fixed32PBFField(fieldOptions);
+					break;
+				case "fixed64":
+					this._value[k] = new Fixed64PBFField(fieldOptions);
+					break;
+				case "float":
+					this._value[k] = new FloatPBFField(fieldOptions);
+					break;
+				case "int32":
+					this._value[k] = new Int32PBFField(fieldOptions);
+					break;
+				case "int64":
+					this._value[k] = new Int64PBFField(fieldOptions);
+					break;
+				case "sfixed32":
+					this._value[k] = new SFixed32PBFField(fieldOptions);
+					break;
+				case "sfixed64":
+					this._value[k] = new SFixed64PBFField(fieldOptions);
+					break;
+				case "sint32":
+					this._value[k] = new SInt32PBFField(fieldOptions);
+					break;
+				case "sint64":
+					this._value[k] = new SInt64PBFField(fieldOptions);
+					break;
+				case "string":
+					this._value[k] = new StringPBFField(fieldOptions);
+					break;
+				case "uint32":
+					this._value[k] = new UInt32PBFField(fieldOptions);
+					break;
+				case "uint64":
+					this._value[k] = new UInt64PBFField(fieldOptions);
+					break;
+				// any other values are messages or enums
+				default:
+					// enums have a values field
+					if(v.values){
+						this._value[k] = new EnumPBFField(
+							fieldOptions,
+							// convert from {[value]: [code]} to {code: [code], value: [value]}
+							Object.entries(v.values).map(x => ({
+								code: x[1],
+								value: x[0]
+							}))
+						);
+					}
+					// messages have a fields field
+					else{
+						if(v.fields){
+							this._value[k] = new MessagePBFField(fieldOptions, {});
+							// load in the upcoming fields
+							this._value[k].from(v.fields);
+						}
+						else{
+							throw new Error("Incomplete definition");
+						}
+					}
+			}
+			// field numbers should never be manually messed with
 			this._value[k].lockFieldNumber();
 		}
 	}

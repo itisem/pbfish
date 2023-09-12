@@ -137,3 +137,48 @@ describe("simple message pbf fields", () => {
 		expect(presidency.toUrl()).toEqual(taskUrl);
 	});
 });
+
+describe("loading from definitions", () => {
+	test("loading from a definition works", () => {
+		const presidency = new MessagePBFField({}, {});
+		presidency.from({
+			title: {
+				type: "string",
+				id: 1
+			},
+			employee: {
+				type: "Employee",
+				id: 2,
+				fields: {
+					name: {
+						type: "string",
+						id: 1
+					},
+					city: {
+						type: "string",
+						id: 2
+					},
+					salary: {
+						type: "double",
+						id: 4
+					},
+					occupation: {
+						type: "Occupation",
+						id: 5,
+						values: {
+							"web developer": 1,
+							"dentist": 2,
+							"waiter": 4
+						}
+					}
+				}
+			},
+			difficult: {
+				type: "bool",
+				id: 3
+			}
+		});
+		presidency.value = taskDescription;
+		expect(presidency.toUrl()).toEqual(taskUrl);
+	})
+})
