@@ -50,7 +50,7 @@ export interface DescriptionObj{
 	[key: string]: CoreDefinition;
 };
 
-interface CoreDefinition{
+export interface CoreDefinition{
 	id: number;
 	type: string;
 	// only exists as "required" and "repeated"
