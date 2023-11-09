@@ -7,14 +7,14 @@ A simple, zero-dependency module for handling Google Maps' loosely protobuf-insp
 
 ## Usage
 
-You can install this package by typing `npm i @gmaps-re/pbfish`
+You can install this package by typing `npm i @gmaps-tools/pbfish`
 
 This tool was built around JSON representations of protobuf definitions. In case you have a `.proto` file, you must first convert it to a JSON definition using [protobufjs-cli](https://www.npmjs.com/package/protobufjs-cli).
 
 Once you have a JSON definition, you can do something like this:
 
 ```js
-import pbfish from "@gmaps-re/pbfish";
+import pbfish from "@gmaps-tools/pbfish";
 const parser = new pbfish(yourJSONDefinition);
 const currentLocation = parser.create("Location"); // loads the protobuf definition called Location from your json
 ```

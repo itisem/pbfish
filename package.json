@@ -1,7 +1,6 @@
-
 {
-	"name": "@gmaps-re/pbfish",
-	"version": "0.9.0",
+	"name": "@gmaps-tools/pbfish",
+	"version": "0.7.0",
 	"description": "A parser for Google Maps' protobuf-like formats",
 	"author": "Emily Nagy",
 	"license": "MIT",
@@ -15,5 +14,6 @@
 		"test": "jest"
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts"
+	"types": "dist/index.d.ts",
+	"type": "module"
 }
