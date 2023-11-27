@@ -315,7 +315,16 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	set delimiter(newDelimiter: string | undefined){
 		const realNewDelimiter = newDelimiter ?? defaultDelimiter;
 		this.options.delimiter = realNewDelimiter;
-		for(let [k, v] of Object.entries(this._value)) v.delimiter = realNewDelimiter;
+		for(let [k, v] of Object.entries(this._value)){
+			if(!Array.isArray(v)){
+				v.delimiter = realNewDelimiter;
+			}
+			else{
+				for(let val of v){
+					v.delimiter = realNewDelimiter;
+				}
+			}
+		}
 	}
 
 	get isUndefined(){
