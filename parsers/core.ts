@@ -33,12 +33,17 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		}
 		if(options.repeated === undefined) options.repeated = false;
 		this.options = options;
+		this.fieldNumberIsLocked = true;
 	}
 	abstract set value(value: T | U | T[] | U[] | undefined);
 	abstract get value(): U | U[];
 
 	lockFieldNumber(): void{
 		this.fieldNumberIsLocked = true;
+	}
+
+	unlockFieldNumber(): void{
+		this.fieldNumberIsLocked = false;
 	}
 
 	set fieldNumber(newFieldNumber: number){
@@ -99,7 +104,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	set value(value: T | T[] | undefined){
 		this.validateValue(value);
-		// T is never an array type for simple pbf fields, so checking whether it is or isn't an array is more than enough for conversion
+		// T is never valid when an array simple pbf fields, so checking whether it is or isn't an array is more than enough for conversion
 		if(this.options.repeated && !Array.isArray(value)) this._value = [value];
 		else this._value = value;
 	}

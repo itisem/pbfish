@@ -87,6 +87,7 @@ describe("loading things works", () => {
 	})
 	it("fails to load incorrect definitions", () => {
 		const parser = new pbfish(badDefinition);
-		expect(() => parser.create("Location")).toThrow();
+		const location = parser.create("Location");
+		expect(() => {location.value = {lat: 3}}).toThrow();
 	});
 })

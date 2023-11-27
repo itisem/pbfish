@@ -26,14 +26,13 @@ export interface MessagePBFFieldObject{
 };
 
 export interface MessagePBFFieldDescriptor{
-	[key: string]: {
-		options: PBFFieldOptions;
-		factory: (options: PBFFieldOptions) => PBFField;
-	}
+	definition: IndividualProtobufDefinition;
+	parent?: MessagePBFField;
+	allDefinitions?: ManyProtobufDefinitions;
 }
 
 export interface MessagePBFFieldValue{
-	[key: string]: AnyEncodedValue | MessagePBFFieldValue;
+	[key: string]: AnyEncodedValue | MessagePBFFieldValue | (AnyEncodedValue | MessagePBFFieldValue)[];
 };
 
 export type NestedStringArray = string | undefined | NestedStringArray[];
@@ -45,142 +44,233 @@ interface SimpleValue{
 	value: string | SimpleValue[];
 };
 
-// the key format of a protobuf definition. used in .from()
-export interface DescriptionObj{
-	[key: string]: CoreDefinition;
-};
-
-export interface CoreDefinition{
-	id: number;
-	type: string;
-	// only exists as "required" and "repeated"
-	rule?: string;
-	// used only for message fields
-	fields?: DescriptionObj;
-	// used only for enum fields
-	values?: EnumDefinitionObj; 
+// the outer layer will always have nested, so exporting IndividualProtobufDefinition and nothing else would be incorrect
+export interface ProtobufDefinition{
+	nested: ManyProtobufDefinitions;
 }
 
-interface EnumDefinitionObj{
-	[key: string]: number;
+export interface ManyProtobufDefinitions{
+	[key: string]: IndividualProtobufDefinition;
+}
+
+export interface IndividualProtobufDefinition{
+	/////// message definitions
+	// all fields within that message
+	fields?: {
+		[key: string]: FieldDefinition; 
+	}
+	// all oneofs. not used in the parser for now
+	oneofs?: {
+		[key: string]: {
+			oneof: string[];
+		}
+	}
+	nested?: ManyProtobufDefinitions
+	/////// enum definitions
+	values?: {
+		[key: string]: number;
+	}
+}
+export interface FieldDefinition{
+	rule?: string; // required, repeated
+	type: string;
+	id: number;
 }
 
 export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObject, MessagePBFFieldValue, EncodedValueArray>{
 	// store the indices of everything in here for easier access in url / array decoding
 	// this should not break unless horribly misused since field numbers get locked once added inside a message
 	indices: string[];
+	protected definition?: IndividualProtobufDefinition;
+	protected parent?: MessagePBFField;
+	protected _allDefinitions?: ManyProtobufDefinitions;
+	// used to get rid of the unnecessary definition field once everything has been created
+	protected createCount: number;
 
-	constructor(options: PBFFieldOptions, baseValues: MessagePBFFieldDescriptor){
+	constructor(options: PBFFieldOptions, description: MessagePBFFieldDescriptor){
 		super(extendOptions("m", options));
 		this._value = {};
 		this.options = options ?? {};
+
+		// set indices for easier access
 		this.indices = [];
-		let i = 0;
-		for(let [k, v] of Object.entries(baseValues)){
-			const fieldNumber = v.options.fieldNumber;
-			if(fieldNumber === undefined) throw new Error("All field numbers must exist");
-			if(!this.indices[fieldNumber - 1]) this.indices[fieldNumber - 1] = k;
-			else throw new Error("All field numbers must be unique");
-			this._value[k] = v.factory(v.options);
-			// field numbers should never be manually messed with
-			this._value[k].lockFieldNumber();
+
+		// setting parent map for accessing full definition later
+		if(!description.parent){
+			this._allDefinitions = description.allDefinitions;
 		}
+		else{
+			this.parent = description.parent;
+		}
+
+		this.definition = description.definition;
 	}
 
+	// checks if a certain rule is present
 	private ruleCheck(rule: string | undefined, against: string){
 		return (rule ?? "").includes(against);
 	}
 
-	from(definition: DescriptionObj){
-		// assumes that all values have been adequately replaced already, and does no lookup here
-		for(let [k, v] of Object.entries(definition)){
-			const index = v.id;
-			if(!this.indices[index - 1]) this.indices[index - 1] = k;
-			else throw new Error("All field numbers must be unique");
-			// all pbf fields have the same options here
-			const fieldOptions = {
-				fieldNumber: v.id,
-				// using .includes since something can be both repeated and required
-				required: (v.rule ?? "").includes("required"),
-				repeated: (v.rule ?? "").includes("repeated")
-			};
-			switch(v.type){
-				case "bool":
-					this._value[k] = new BoolPBFField(fieldOptions);
-					break;
-				case "bytes":
-					this._value[k] = new BytesPBFField(fieldOptions);
-					break;
-				case "double":
-					this._value[k] = new DoublePBFField(fieldOptions);
-					break;
-				case "fixed32":
-					this._value[k] = new Fixed32PBFField(fieldOptions);
-					break;
-				case "fixed64":
-					this._value[k] = new Fixed64PBFField(fieldOptions);
-					break;
-				case "float":
-					this._value[k] = new FloatPBFField(fieldOptions);
-					break;
-				case "int32":
-					this._value[k] = new Int32PBFField(fieldOptions);
-					break;
-				case "int64":
-					this._value[k] = new Int64PBFField(fieldOptions);
-					break;
-				case "sfixed32":
-					this._value[k] = new SFixed32PBFField(fieldOptions);
-					break;
-				case "sfixed64":
-					this._value[k] = new SFixed64PBFField(fieldOptions);
-					break;
-				case "sint32":
-					this._value[k] = new SInt32PBFField(fieldOptions);
-					break;
-				case "sint64":
-					this._value[k] = new SInt64PBFField(fieldOptions);
-					break;
-				case "string":
-					this._value[k] = new StringPBFField(fieldOptions);
-					break;
-				case "uint32":
-					this._value[k] = new UInt32PBFField(fieldOptions);
-					break;
-				case "uint64":
-					this._value[k] = new UInt64PBFField(fieldOptions);
-					break;
-				// any other values are messages or enums
-				default:
-					// enums have a values field
-					if(v.values){
-						this._value[k] = new EnumPBFField(
-							fieldOptions,
-							// convert from {[value]: [code]} to {code: [code], value: [value]}
-							Object.entries(v.values).map(x => ({
-								code: x[1],
-								value: x[0]
-							}))
-						);
+	// returns the whole protobuf definition. used in constructing stuff
+	get allDefinitions(): ManyProtobufDefinitions{
+		if(this.parent) return this.parent.allDefinitions;
+		return this._allDefinitions;
+	}
+
+	private create(key: string, createMin?: number){
+		// load some basic definitions
+		const fieldDefinition = this.definition.fields[key];
+		if(!fieldDefinition) throw new Error("Attempting to create non-existent field");
+		const fieldNumber = fieldDefinition.id;
+		if(!fieldNumber) throw new Error("All field numbers must be specified");
+		// disallow non-unique field numbers unless this is a repeated message field & we are just creating additional fields
+		if(this.indices[fieldNumber] && (!createMin || this.indices[fieldNumber] !== key)) throw new Error("All field numbers must be unique");
+		this.indices[fieldNumber] = key;
+		const fieldOptions = {
+			fieldNumber,
+			// having a field be both repeated and required is illegal in v3, but i will include handling such incorrect fields for userfriendliness
+			required: this.ruleCheck(fieldDefinition.rule, "required"),
+			repeated: this.ruleCheck(fieldDefinition.rule, "repeated")
+		};
+		// create more copies of a message field if createMin is set
+		if(createMin){
+			if(!Array.isArray(this._value[key])){
+				throw new Error("Cannot create copies of a non-repeated or non-message field");
+				// this shouldn't cause an issue since createMin is only ever specified after calling create once before
+			}
+			// too many creations, delete some
+			if(createMin <= this._value[key].length){
+				this._value[key].splice(createMin);
+				return;
+			}
+			// find the definition, the same as if it was a "normal" thing
+			const nestedKeys = Object.keys(this.definition.nested ?? {});
+			let newDefinition: IndividualProtobufDefinition;
+			if(nestedKeys.includes(fieldDefinition.type)){
+				newDefinition = this.definition.nested[fieldDefinition.type];
+			}
+			else{
+				const allDefinitions = this.allDefinitions;
+				if(Object.keys(allDefinitions).includes(fieldDefinition.type)){
+					newDefinition = allDefinitions[fieldDefinition.type];
+				}
+				else{
+					throw new Error("Non-existent field type");
+				}
+			}
+			// a definition is a message iff it has a fields value
+			// by all accounts, this should not be possible based on logic later in the field
+			if(!newDefinition.fields) throw new Error("Trying to repeat a non-message field in the incorrect way -- this should never be possible");
+			for(let i = this._value[key].length; i < createMin; i++){
+				this._value[key].push(new MessagePBFField(fieldOptions, {
+					parent: this,
+					definition: newDefinition
+				}));
+			}
+			return;
+		}
+		// otherwise, just create a field normally
+		switch(fieldDefinition.type){
+			case "bool":
+				this._value[key] = new BoolPBFField(fieldOptions);
+				break;
+			case "bytes":
+				this._value[key] = new BytesPBFField(fieldOptions);
+				break;
+			case "double":
+				this._value[key] = new DoublePBFField(fieldOptions);
+				break;
+			case "fixed32":
+				this._value[key] = new Fixed32PBFField(fieldOptions);
+				break;
+			case "fixed64":
+				this._value[key] = new Fixed64PBFField(fieldOptions);
+				break;
+			case "float":
+				this._value[key] = new FloatPBFField(fieldOptions);
+				break;
+			case "int32":
+				this._value[key] = new Int32PBFField(fieldOptions);
+				break;
+			case "int64":
+				this._value[key] = new Int64PBFField(fieldOptions);
+				break;
+			case "sfixed32":
+				this._value[key] = new SFixed32PBFField(fieldOptions);
+				break;
+			case "sfixed64":
+				this._value[key] = new SFixed64PBFField(fieldOptions);
+				break;
+			case "sint32":
+				this._value[key] = new SInt32PBFField(fieldOptions);
+				break;
+			case "sint64":
+				this._value[key] = new SInt64PBFField(fieldOptions);
+				break;
+			case "string":
+				this._value[key] = new StringPBFField(fieldOptions);
+				break;
+			case "uint32":
+				this._value[key] = new UInt32PBFField(fieldOptions);
+				break;
+			case "uint64":
+				this._value[key] = new UInt64PBFField(fieldOptions);
+				break;
+			// any other values are messages or enums
+			default:
+				const nestedKeys = Object.keys(this.definition.nested ?? {});
+				let newDefinition: IndividualProtobufDefinition;
+				if(nestedKeys.includes(fieldDefinition.type)){
+					newDefinition = this.definition.nested[fieldDefinition.type];
+				}
+				else{
+					const allDefinitions = this.allDefinitions;
+					if(Object.keys(allDefinitions).includes(fieldDefinition.type)){
+						newDefinition = allDefinitions[fieldDefinition.type];
 					}
-					// messages have a fields field
 					else{
-						if(v.fields){
-							this._value[k] = new MessagePBFField(fieldOptions, {});
-							// load in the upcoming fields
-							this._value[k].from(v.fields);
+						throw new Error("Non-existent field type");
+					}
+				}
+				// enums have a values field
+				if(newDefinition.values){
+					this._value[key] = new EnumPBFField(
+						fieldOptions,
+						// convert from {[value]: [code]} to {code: [code], value: [value]}
+						Object.entries(newDefinition.values).map(x => ({
+							code: x[1],
+							value: x[0]
+						}))
+					);
+				}
+				// messages have a fields field
+				else{
+					// repeated messages are not handled well, so instead, we just create an array of individual messages
+					if(newDefinition.fields){
+						if(!fieldOptions.repeated){
+							this._value[key] = new MessagePBFField(fieldOptions, {
+								parent: this,
+								definition: newDefinition
+							});
 						}
 						else{
-							throw new Error("Incomplete definition");
+							// creating a single field since .create only gets called when a value is already being set
+							this._value[key] = [
+								new MessagePBFField(fieldOptions, {
+									parent: this,
+									definition: newDefinition
+								})
+							];
 						}
 					}
-			}
-			// field numbers should never be manually messed with
-			this._value[k].lockFieldNumber();
+					else{
+						throw new Error("Incomplete definition");
+					}
+				}
 		}
 	}
 
-	set value(value: MessagePBFFieldObject | MessagePBFFieldValue | undefined){
+	set value(value: MessagePBFFieldValue | undefined){
 		// reset all values if undefined
 		if(value === undefined){
 			for(let [k,v] of Object.entries(this._value)){
@@ -189,19 +279,21 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		}
 		// otherwise, set values, or add new fields depending on what we have
 		for(let [k, v] of Object.entries(value)){
-			if(v instanceof GenericPBFField){
-				// genericpbffield is never a valid value, so safe to just treat it as a drop-in replacement
-				this._value[k] = v;
-				const fieldNumber = v.fieldNumber;
-				if(fieldNumber === undefined) throw new Error("All field numbers must exist");
-				if(!this.indices[fieldNumber]) this.indices[fieldNumber - 1] = k;
-				else throw new Error("All field numbers must be unique");
-				v.lockFieldNumber();
+			// the object doesn't exist yet, we need to create it anew
+			if(!this._value[k]){
+				if(Object.keys(this.definition.fields).includes(k)) this.create(k);
+				else throw new Error("Attempting to set non-existent field " + k);
+			}
+			if(Array.isArray(this._value[k])){
+
+				let allValues = Array.isArray(v) ? v : [v];
+				this.create(k, allValues.length); // ensure that there is the right number of message objects present
+				for(let i = 0; i < allValues.length; i++){
+					this._value[k][i].value = allValues[i];
+				}
 			}
 			else{
-				if(this._value[k] !== undefined){
-					this._value[k].value = v;
-				}
+				this._value[k].value = v;
 			}
 		}
 	}
