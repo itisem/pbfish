@@ -94,6 +94,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	protected activeOneofsByKey: {
 		[key: string]: number[];
 	}
+	// check for required fields
+	protected requiredFields: string[];
 
 	constructor(options: PBFFieldOptions, description: MessagePBFFieldDescriptor){
 		super(extendOptions("m", options));
@@ -103,10 +105,15 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		// set indices for easier access
 		this.indices = [];
 		this.allIndices = [];
+		this.requiredFields = [];
+		this.oneofs = [];
+		// setting indices and required fields
 		for(let key in description.definition.fields){
-			const id = description.definition.fields[key].id;
+			let field = description.definition.fields[key]
+			const id = field.id;
 			if(this.allIndices[id - 1]) throw new Error("Duplicate field id");
 			this.allIndices[id - 1] = key;
+			if(this.ruleCheck(field.rule, "required")) this.requiredFields.push(key);
 		}
 
 		// setting parent map for accessing full definition later
@@ -136,13 +143,70 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		}
 	}
 
+	// check if all oneofs are met
 	protected testOneofs(key: string){
 		if(!this.activeOneofsByKey[key]) return;
 		for(let oneofIndex of this.activeOneofsByKey[key]){
 			const oneof = this.oneofs[oneofIndex];
 			for(let oneofKey of oneof){
-				if(this._value[oneofKey] && oneofKey !== key) throw new Error("Oneof constraint violation: " + JSON.stringify(oneof));
+				if(this._value[oneofKey] && oneofKey !== key) throw new Error(`Oneof constraint violation: ${oneof}`);
 			}
+		}
+	}
+
+	// check if required fields are all set
+	protected checkRequired(){
+		for(let key of this.requiredFields){
+			if(!this._value[key]) throw new Error(`Required field ${key} unset`);
+		}
+	}
+
+	// check if required fields are all set, and oneofs have exactly one value set
+	// not to be confused with validateValue which does further validation
+	protected checkValidity(){
+		this.checkRequired();
+		for(let oneof of this.oneofs){
+			let oneofCount = 0;
+			for(let key of oneof){
+				if(this._value[key]) oneofCount += 1;
+			}
+			if(oneofCount !== 1) throw new Error(`Invalid number of values set for oneof ${oneof}`);
+		}
+	}
+
+	validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
+		if(value === undefined) this.checkValidity();
+		if(this.options.required && this.isUndefined) throw new Error("Required field cannot be undefined");
+		const realValue = value ?? this._value;
+		let fieldNumbers = [];
+		for(let k in realValue){
+			let v = realValue[k];
+			if(Array.isArray(v)){
+				let allIndices = new Set();
+				// if it's a repeated message field, validate everything individually
+				for(let val in v){
+					// this should never really happen, but added a check to make sure
+					if(typeof val !== "object" || val === null || Array.isArray(val)){
+						continue;
+					}
+					let valAsField = val as PBFField;
+					valAsField.validateValue();
+					// makes sure that field numbers aren't wrong
+					allIndices.add(valAsField.fieldNumber);
+				}
+				if(allIndices.size > 1) throw new Error("Field numbers don't match up in repeated field " + k);
+				if(allIndices.size === 1){
+					const [realIndex] = allIndices;
+					fieldNumbers.push(realIndex);
+				}
+			}
+			else{
+				v.validateValue();
+				fieldNumbers.push(v.fieldNumber);
+			}
+		}
+		if((new Set(fieldNumbers)).size !== fieldNumbers.length){
+			throw new Error("This message has duplicate field numbers");
 		}
 	}
 
@@ -157,6 +221,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		return this._allDefinitions;
 	}
 
+	// add a new field before a value is loaded into it
 	private create(key: string, createMin?: number){
 		// load some basic definitions
 		const fieldDefinition = this.definition.fields[key];
@@ -164,8 +229,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		const fieldNumber = fieldDefinition.id;
 		if(!fieldNumber) throw new Error("All field numbers must be specified");
 		// disallow non-unique field numbers unless this is a repeated message field & we are just creating additional fields
-		if(this.indices[fieldNumber] && (!createMin || this.indices[fieldNumber] !== key)) throw new Error("All field numbers must be unique");
-		this.indices[fieldNumber] = key;
+		if(this.indices[fieldNumber - 1] && (!createMin || this.indices[fieldNumber - 1] !== key)) throw new Error("All field numbers must be unique");
+		this.indices[fieldNumber - 1] = key;
 		const fieldOptions = {
 			fieldNumber,
 			// having a field be both repeated and required is illegal in v3, but i will include handling such incorrect fields for userfriendliness
@@ -340,6 +405,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	get value(): MessagePBFFieldValue{
+		this.checkValidity();
 		if(this._value === undefined) return undefined;
 		return Object.fromEntries(
 			Object.entries(this._value).map(([k, v]) => {
@@ -378,41 +444,6 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		return true;
 	}
 
-	validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
-		if(this.options.required && this.isUndefined) throw new Error("Required field cannot be undefined");
-		const realValue = value ?? this._value;
-		let fieldNumbers = [];
-		for(let k in realValue){
-			let v = realValue[k];
-			if(Array.isArray(v)){
-				let allIndices = new Set();
-				// if it's a repeated message field, validate everything individually
-				for(let val in v){
-					// this should never really happen, but added a check to make sure
-					if(typeof val !== "object" || val === null || Array.isArray(val)){
-						continue;
-					}
-					let valAsField = val as PBFField;
-					valAsField.validateValue();
-					// makes sure that field numbers aren't wrong
-					allIndices.add(valAsField.fieldNumber);
-				}
-				if(allIndices.size > 1) throw new Error("Field numbers don't match up in repeated field " + k);
-				if(allIndices.size === 1){
-					const [realIndex] = allIndices;
-					fieldNumbers.push(realIndex);
-				}
-			}
-			else{
-				v.validateValue();
-				fieldNumbers.push(v.fieldNumber);
-			}
-		}
-		if((new Set(fieldNumbers)).size !== fieldNumbers.length){
-			throw new Error("This message has duplicate field numbers");
-		}
-	}
-
 	private encodeValue(value?: MessagePBFFieldObject): string{
 		const realValue = value ?? this._value;
 		const valuesThatExist = Object.entries(realValue).filter(([k, v]) => !v.isUndefined);
@@ -443,7 +474,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	fromUrl(value?: NestedStringArray){
-		if(value === undefined || value === "") this.value = undefined;
+		if(value === undefined || value === "") return;
 		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		// the url needs to be broken into chunks
 		if(!Array.isArray(value)){
@@ -479,11 +510,12 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		}
 		// sorting out post parsing
 		for(let i = 0; i < value.length; i++){
+			if(value[i] === undefined) continue;
 			let key = this.indices[i];
 			// _value already has empty spaces for objects, so calling fromUrl on it works
 			if(key === undefined){
 				key = this.allIndices[i];
-				if(!key) throw new Error("Invalid index " + i);
+				if(!key) throw new Error(`Invalid index ${i+1}`);
 				this.create(key);
 			}
 			// handle oneofs
