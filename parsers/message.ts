@@ -321,7 +321,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			}
 			else{
 				for(let val of v){
-					v.delimiter = realNewDelimiter;
+					val.delimiter = realNewDelimiter;
 				}
 			}
 		}
