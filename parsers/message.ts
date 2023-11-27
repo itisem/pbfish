@@ -320,7 +320,14 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	get isUndefined(){
 		for(let [k, v] of Object.entries(this._value)){
-			if(!v.isUndefined) return false;
+			if(Array.isArray(v)){
+				for(let val of v){
+					if(!val.isUndefined) return false;
+				}
+			}
+			else{
+				if(!v.isUndefined) return false;
+			}
 		}
 		return true;
 	}
@@ -470,6 +477,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				// this can safely be ignored since errors will occur if we try to pass it the wrong type of value anyway
 				// @ts-ignore
 				this._value[key].fromArray(v);
+			}
+			else{
+				this.create(key);
 			}
 		}
 	}
