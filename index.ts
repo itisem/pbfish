@@ -1,8 +1,6 @@
 // re-exporting everything to have them accessible for anyone who needs the raw parsers for any reason
 import MessagePBFField from "./parsers/message";
 
-import dset from "dset";
-
 import type {ProtobufDefinition, ManyProtobufDefinitions} from "./parsers/message";
 
 export default class ProtobufParser{
