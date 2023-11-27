@@ -307,8 +307,12 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	get value(): MessagePBFFieldValue{
+		if(this._value === undefined) return undefined;
 		return Object.fromEntries(
-			Object.entries(this._value).map(([k, v]) => [k, v.value])
+			Object.entries(this._value).map(([k, v]) => {
+				if(!Array.isArray(v)) return [k, v.value];
+				else return [k, v.map(x => x.value)];
+			})
 		);
 	}
 
@@ -479,17 +483,30 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			return;
 		}
 		for(let [index, v] of value.entries()){
-			const key = this.indices[index];
+			const key = this.allIndices[index];
 			// if no index was found, treat it as a reserved value
 			if(key !== undefined){
-				// typing can be dubious since it accepts any value, while the value setting does not do the same
-				// this can safely be ignored since errors will occur if we try to pass it the wrong type of value anyway
-				// @ts-ignore
-				this._value[key].fromArray(v);
+				if(!this._value[key]){
+					this.create(key);
+				}
+				if(Array.isArray(this._value[key])){
+					if(!Array.isArray(v)) v = [v];
+					this.create(key, v.length);
+					for(let i = 0; i < v.length; i++){
+						// as below, typing dubiousness can be ignored safely since errors will happen when passing incorrect type
+						// @ts-ignore
+						this._value[key][i].fromArray(v[i]);
+					}
+				}
+				else{
+					// typing can be dubious since it accepts any value, while the value setting does not do the same
+					// this can safely be ignored since errors will occur if we try to pass it the wrong type of value anyway
+					// @ts-ignore
+					this._value[key].fromArray(v);
+				}
 			}
-			else{
-				this.create(key);
-			}
+			// not erroring when the key is undefined
+			// since it is possible to have incomplete / partial definitions
 		}
 	}
 
