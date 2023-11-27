@@ -19,11 +19,13 @@ import UInt32PBFField from "./uint32";
 import UInt64PBFField from "./uint64";
 
 // full descriptions of valid pbf fields and baseValues. primarily used for manually made classes
-export type PBFField = GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, AnyEncodedValue | MessagePBFFieldValue , AnyEncodedValue>;
+export type PBFField = GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, AnyEncodedValue | MessagePBFFieldValue, AnyEncodedValue>;
 
-export interface MessagePBFFieldObject{
+export interface SingleMessagePBFFieldObject{
 	[key: string]: PBFField;
 };
+
+export type MessagePBFFieldObject = SingleMessagePBFFieldObject | SingleMessagePBFFieldObject[];
 
 export interface MessagePBFFieldDescriptor{
 	definition: IndividualProtobufDefinition;
@@ -77,10 +79,11 @@ export interface FieldDefinition{
 	id: number;
 }
 
-export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObject, MessagePBFFieldValue, EncodedValueArray>{
+export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFieldObject, MessagePBFFieldValue, EncodedValueArray>{
 	// store the indices of everything in here for easier access in url / array decoding
 	// this should not break unless horribly misused since field numbers get locked once added inside a message
 	indices: string[];
+	protected allIndices: string[];
 	protected definition?: IndividualProtobufDefinition;
 	protected parent?: MessagePBFField;
 	protected _allDefinitions?: ManyProtobufDefinitions;
@@ -94,6 +97,12 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 
 		// set indices for easier access
 		this.indices = [];
+		this.allIndices = [];
+		for(let key in description.definition.fields){
+			const id = description.definition.fields[key].id;
+			if(this.allIndices[id - 1]) throw new Error("Duplicate field id");
+			this.allIndices[id - 1] = key;
+		}
 
 		// setting parent map for accessing full definition later
 		if(!description.parent){
@@ -285,7 +294,6 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 				else throw new Error("Attempting to set non-existent field " + k);
 			}
 			if(Array.isArray(this._value[k])){
-
 				let allValues = Array.isArray(v) ? v : [v];
 				this.create(k, allValues.length); // ensure that there is the right number of message objects present
 				for(let i = 0; i < allValues.length; i++){
@@ -317,13 +325,35 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		return true;
 	}
 
-	validateValue(value?: MessagePBFFieldObject){
+	validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
 		if(this.options.required && this.isUndefined) throw new Error("Required field cannot be undefined");
 		const realValue = value ?? this._value;
 		let fieldNumbers = [];
-		for(let [k, v] of Object.entries(realValue)){
-			v.validateValue();
-			fieldNumbers.push(v.fieldNumber);
+		for(let k in realValue){
+			let v = realValue[k];
+			if(Array.isArray(v)){
+				let allIndices = new Set();
+				// if it's a repeated message field, validate everything individually
+				for(let val in v){
+					// this should never really happen, but added a check to make sure
+					if(typeof val !== "object" || val === null || Array.isArray(val)){
+						continue;
+					}
+					let valAsField = val as PBFField;
+					valAsField.validateValue();
+					// makes sure that field numbers aren't wrong
+					allIndices.add(valAsField.fieldNumber);
+				}
+				if(allIndices.size > 1) throw new Error("Field numbers don't match up in repeated field " + k);
+				if(allIndices.size === 1){
+					const [realIndex] = allIndices;
+					fieldNumbers.push(realIndex);
+				}
+			}
+			else{
+				v.validateValue();
+				fieldNumbers.push(v.fieldNumber);
+			}
 		}
 		if((new Set(fieldNumbers)).size !== fieldNumbers.length){
 			throw new Error("This message has duplicate field numbers");
@@ -337,6 +367,7 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		// the value of the field itself is how many values it contains, and then append the url encoding of those values
 		// don't include total count if the field number is unset
 		const fieldCountString = this.options.fieldNumber ? valuesThatExist.length.toString() : "";
+		// if any field is repeated, this will just throw an error by itself
 		return fieldCountString + valuesThatExist.map(([k, v]) => v.toUrl()).join("");
 	}
 
@@ -395,11 +426,15 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		}
 		// sorting out post parsing
 		for(let i = 0; i < value.length; i++){
-			const key = this.indices[i];
+			let key = this.indices[i];
 			// _value already has empty spaces for objects, so calling fromUrl on it works
-			if(key !== undefined){
-				this._value[key].fromUrl(value[i] as string);
+			if(key == undefined){
+				key = this.allIndices[i];
+				if(!key) throw new Error("Invalid index " + i);
+				this.create(key);
 			}
+			if(Array.isArray(this._value[key])) throw new Error("Repeated fields cannot be urlencoded");
+			this._value[key].fromUrl(value[i] as string);
 		}
 	}
 
@@ -407,13 +442,27 @@ export default class MessagePBFField extends GenericPBFField<MessagePBFFieldObje
 		this.validateValue();
 		let encodedValue: AnyEncodedValue = [];
 		for(let [k, v] of Object.entries(this._value)){
-			encodedValue[v.fieldNumber - 1] = v.toArray();
+			// for repeated message fields, encode them separately
+			if(Array.isArray(v)){
+				if(v.length === 0) return undefined; // empty array = nothing to return
+				// assumes that all field numbers are identical
+				// which should be the case unless field numbers are manually unlocked for whatever bizarre reason
+				encodedValue[v[0].fieldNumber - 1] = v.map(x => x.toArray());
+			}
+			// otherwise, encode the field normally
+			else{
+				encodedValue[v.fieldNumber - 1] = v.toArray();
+			}
 		}
 		return encodedValue;
 	}
 
+	toJSON(): string{
+		return JSON.stringify(this.toArray());
+	}
+
 	fromArray(value?: EncodedValueArray){
-		if(value === undefined){
+		if(value === undefined || value === null){
 			this._value = undefined;
 			return;
 		}
