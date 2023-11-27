@@ -36,6 +36,5 @@ For any project that does not involve Google Maps, you will usually get better r
 
 This parser also does not implement the full scope of protobuf as it only includes features which are useful in my usecases. Currently missing features:
 
- * `oneof` keywords
  * `bytes` datatype
  * urlencoding `repeated` fields (not sure if this is even allowed by Google Maps)

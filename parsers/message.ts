@@ -89,6 +89,11 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	protected _allDefinitions?: ManyProtobufDefinitions;
 	// used to get rid of the unnecessary definition field once everything has been created
 	protected createCount: number;
+	// checks for oneofs
+	protected oneofs?: string[][];
+	protected activeOneofsByKey: {
+		[key: string]: number[];
+	}
 
 	constructor(options: PBFFieldOptions, description: MessagePBFFieldDescriptor){
 		super(extendOptions("m", options));
@@ -113,6 +118,32 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		}
 
 		this.definition = description.definition;
+		this.activeOneofsByKey = {};
+
+		// setting oneofs
+		let oneofIndex = 0;
+		if(this.definition.oneofs){
+			this.oneofs = [];
+			for(let key in this.definition.oneofs){
+				const oneof = this.definition.oneofs[key].oneof;
+				this.oneofs.push(oneof);
+				for(let oneofKey of oneof){
+					if(!this.activeOneofsByKey[oneofKey]) this.activeOneofsByKey[oneofKey] = [];
+					this.activeOneofsByKey[oneofKey].push(oneofIndex);
+				}
+				oneofIndex += 1;
+			}
+		}
+	}
+
+	protected testOneofs(key: string){
+		if(!this.activeOneofsByKey[key]) return;
+		for(let oneofIndex of this.activeOneofsByKey[key]){
+			const oneof = this.oneofs[oneofIndex];
+			for(let oneofKey of oneof){
+				if(this._value[oneofKey] && oneofKey !== key) throw new Error("Oneof constraint violation: " + JSON.stringify(oneof));
+			}
+		}
 	}
 
 	// checks if a certain rule is present
@@ -293,6 +324,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				if(Object.keys(this.definition.fields).includes(k)) this.create(k);
 				else throw new Error("Attempting to set non-existent field " + k);
 			}
+			// checking for oneofs in case there is an error
+			this.testOneofs(k);
 			if(Array.isArray(this._value[k])){
 				let allValues = Array.isArray(v) ? v : [v];
 				this.create(k, allValues.length); // ensure that there is the right number of message objects present
@@ -448,11 +481,13 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		for(let i = 0; i < value.length; i++){
 			let key = this.indices[i];
 			// _value already has empty spaces for objects, so calling fromUrl on it works
-			if(key == undefined){
+			if(key === undefined){
 				key = this.allIndices[i];
 				if(!key) throw new Error("Invalid index " + i);
 				this.create(key);
 			}
+			// handle oneofs
+			this.testOneofs(key);
 			if(Array.isArray(this._value[key])) throw new Error("Repeated fields cannot be urlencoded");
 			this._value[key].fromUrl(value[i] as string);
 		}
@@ -489,6 +524,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				if(!this._value[key]){
 					this.create(key);
 				}
+				// test oneofs before setting value
+				this.testOneofs(key);
+				// handle repeated message field properly
 				if(Array.isArray(this._value[key])){
 					if(!Array.isArray(v)) v = [v];
 					this.create(key, v.length);

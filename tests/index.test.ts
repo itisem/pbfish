@@ -187,4 +187,31 @@ describe("can load large definitions", () => {
 		request2.fromUrl("!1m1!1sapiv3");
 		expect(request2.value).toEqual({context: {productId: "apiv3"}});
 	});
+});
+
+describe("oneof constraint violations are not accepted", () => {
+	const parser = new pbfish(SingleImageSearch);
+	const request1 = parser.create("SingleImageSearchRequest");
+	expect(() => request1.value = {
+		location: {
+			lat: 1,
+			lng: 2
+		},
+		feature: {
+			tag: "hello"
+		}
+	}).toThrow();
+	const request2 = parser.create("SingleImageSearchRequest");
+	expect(() => request2.fromArray([
+		["apiv3"],
+		[[undefined,undefined,53.210243,6.564092],500],
+		[undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[[[2,true,2]]]],
+		[[2,6]],
+		undefined,
+		undefined,
+		undefined,
+		[undefined,undefined,"hello"]
+	])).toThrow();
+	const request3 = parser.create("SingleImageSearchRequest");
+	expect(() => request3.fromUrl("!1sapiv3!2m2!3d53.210243!4d6.564092!8m1!3shello")).toThrow();
 })
