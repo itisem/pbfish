@@ -457,10 +457,6 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		return encodedValue;
 	}
 
-	toJSON(): string{
-		return JSON.stringify(this.toArray());
-	}
-
 	fromArray(value?: EncodedValueArray){
 		if(value === undefined || value === null){
 			this._value = undefined;
@@ -476,5 +472,13 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				this._value[key].fromArray(v);
 			}
 		}
+	}
+
+	toJSON(): string{
+		return JSON.stringify(this.toArray());
+	}
+
+	fromJSON(value: string){
+		this.fromArray(JSON.parse(value));
 	}
 }

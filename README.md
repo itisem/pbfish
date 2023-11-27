@@ -23,8 +23,10 @@ You can then use the following methods to parse and manipulate data:
 ```js
 currentLocation.value = {lat: 53.21034178655471, lng: 6.564304111160638, notes: {country: "nl", subdivision: "groningen"}} // loads in a value to the the parser
 currentLocation.toUrl(); // exports a value as a url-encoded protobuf format
-currentLocation.toArray(); // exports value as a json-encoded protobuf format
+currentLocation.toJSON(); // exports value as a json-encoded protobuf format
+currentLocation.toArray(); // exports value as a json-encoded protobuf format (decoded into an array)
 currentLocation.fromUrl("!1d53.21034178655471!2d6.564304111160638!3m2!1snl!2sgroningen"); // loads a value from a url-encoded format
+currentLocation.fromJSON(); // loads a value from a json-encoded protobuf format (unparsed)
 currentLocation.fromArray(parsedJSON); // loads a value from a json-encoded protobuf format (decoded into an array)
 ```
 
