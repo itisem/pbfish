@@ -222,4 +222,5 @@ describe("required works", () => {
 	request.value = {location: {center: {lat: 1, lng: 2}}};
 	expect(() => request.toArray()).toThrow();
 	expect(() => request.toUrl()).toThrow();
+	expect(() => request.value).toThrow();
 })
