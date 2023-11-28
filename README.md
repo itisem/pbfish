@@ -22,6 +22,7 @@ const currentLocation = parser.create("Location"); // loads the protobuf definit
 You can then use the following methods to parse and manipulate data:
 ```js
 currentLocation.value = {lat: 53.210, lng: 6.564, notes: {country: "nl", subdivision: "groningen"}} // loads in a value to the the parser
+// note setting .value again, i.e. doing something along the lines of currentLocation.value = {lat: 1, lng: 2} will only overwrite the changed values, and not unset any previously set value
 currentLocation.toUrl(); // exports a value as a url-encoded protobuf format, i.e. "!1d53.210!2d6.564!3m2!1snl!2sgroningen"
 currentLocation.toJSON(); // exports value as a json-encoded protobuf format, i.e. '[53.210,6.564,null,["nl", "groningen"]]'
 currentLocation.toArray(); // exports value as a json-encoded protobuf format (decoded into an array), i.e. [53.210,6.564,undefined,["nl", "groningen"]]
@@ -35,7 +36,7 @@ You can also access the entire data by using `.value`, i.e.
 currentLocation.value // returns the entire value of the data, i.e. {lat: 53.210, lng: 6.564, notes: {country: "nl", subdivision: "groningen"}}
 ```
 
-Specific data points can be accessed with dot accessors, i.e.
+Specific data points can be accessed (but not set!) with dot accessors, i.e.
 ```js
 currentLocation.notes // returns {country: "nl", subdivision: "groningen"}
 currentLocation.notes.country // returns "nl"
@@ -43,9 +44,9 @@ currentLocation.notes.country // returns "nl"
 
 ## Limitations
 
-For any project that does not involve Google Maps, you will usually get better results if you use a standard protobuf format, rather than these alternative encodings. If you wish to do so, I recommend the [pbf](https://www.npmjs.com/package/pbf) module.
+For any project that does not involve Google Maps, you will usually get better results if you use a standard protobuf format, rather than these alternative encodings. If you wish to do so, I recommend the [pbf](https://www.npmjs.com/package/pbf) module since it is very performant.
 
-This parser also does not implement the full scope of protobuf as it only includes features which are useful in my usecases. Currently missing features:
+The following features are missing:
 
- * `bytes` datatype
+ * `bytes` datatype (I am yet to see a practical example of this in my reverse engineering, so I don't know what it looks like on Google's side)
  * urlencoding `repeated` fields (not sure if this is even allowed by Google Maps)
