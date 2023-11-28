@@ -24,7 +24,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 			case "string":
 				return this.lookupValue(value);
 			default:
-				throw new Error("Invalid type for value");
+				throw new Error(`Invalid type for value in ${this.name}`);
 		}
 	}
 
@@ -34,7 +34,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 			return;
 		}
 		if(Array.isArray(value)){
-			if(!this.options.repeated) throw new Error("Non-repeated fields cannot have an array value");
+			if(!this.options.repeated) throw new Error(`Non-repeated fields cannot have an array value in ${this.name}`);
 			else{
 				if(value.length === 0){
 					this._value = undefined;
@@ -58,11 +58,11 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	get value(): string | string[]{
 		// _value should always be an array if repeated, and not an array if not repeated
 		if(this.options.repeated){
-			if(!Array.isArray(this._value)) throw new Error("Something extremely unusual happened, and the value got corrupted");
+			if(!Array.isArray(this._value)) throw new Error(`Something extremely unusual happened, and the value got corrupted in ${this.name}`);
 			else return this._value.map(x => this.lookupCode(x));
 		}
 		else{
-			if(Array.isArray(this._value)) throw new Error("Something extremely unusual happened, and the value got corrupted");
+			if(Array.isArray(this._value)) throw new Error(`Something extremely unusual happened, and the value got corrupted in ${this.name}`);
 			else return this.lookupCode(this._value);
 		}
 	}
@@ -70,20 +70,20 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	protected lookupCode(code: number): string{
 		if(code === null || code === undefined) return undefined;
 		const found = this.codes.find(element => element.code === code);
-		if(!found) throw new Error(`Invalid enum code ${code}, valid values are ${this.codes.map(x => x.code).join(", ")}`);
+		if(!found) throw new Error(`Invalid enum code ${code} in ${this.name}, valid values are ${this.codes.map(x => x.code).join(", ")}`);
 		return found.value;
 	}
 
 	protected lookupValue(value: string): number{
 		if(value === null || value === undefined) return undefined;
 		const found = this.codes.find(element => element.value === value);
-		if(!found) throw new Error(`Invalid enum value ${value}, valid values are ${this.codes.map(x => x.value).join(", ")}`);
+		if(!found) throw new Error(`Invalid enum value ${value} in ${this.name}, valid values are ${this.codes.map(x => x.value).join(", ")}`);
 		return found.code;
 	}
 
 	validateValue(value?: number){
 		const realValue = value ?? this._value;
-		if(this.options.required && realValue === undefined) throw new Error("A required field cannot have an undefined value");
+		if(this.options.required && realValue === undefined) throw new Error(`A required field cannot have an undefined value in ${this.name}`);
 		this.lookupCode(value);
 	}
 
@@ -94,7 +94,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	}
 
 	toUrl(): string{
-		if(this.options.repeated) throw new Error("Repeated values cannot be urlencoded");
+		if(this.options.repeated) throw new Error(`Repeated values cannot be urlencoded in ${this.name}`);
 		this.validateValue();
 		if(this._value === undefined) return "";
 		if(!this.options.fieldNumber){
@@ -105,7 +105,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	}
 
 	fromUrl(value?: string){
-		if(this.options.repeated || Array.isArray(this._value)) throw new Error("Repeated values cannot be urlencoded");
+		if(this.options.repeated || Array.isArray(this._value)) throw new Error(`Repeated values cannot be urlencoded in ${this.name}`);
 		if(!value) this._value = undefined;
 		let newValue = Number(this.parseUrlCore(value));
 		this.validateValue(newValue);

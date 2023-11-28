@@ -9,9 +9,9 @@ export default class SFixed32PBFField extends NumericPBFField{
 
 	validateValue(value?: number | number[]){
 		this.validateValueCore(value, (v: number) => {
-			if(!Number.isInteger(v)) throw new Error(`Invalid value for int32: ${v}`);
-			if(v < -2147483648) throw new Error(`Invalid value for int32: ${v}`);
-			if(v > 2147483647) throw new Error(`Invalid value for int32: ${v}`);
+			if(!Number.isInteger(v)) throw new Error(`Invalid value for int32: ${v} in ${this.name}`);
+			if(v < -2147483648) throw new Error(`Invalid value for int32: ${v} in ${this.name}`);
+			if(v > 2147483647) throw new Error(`Invalid value for int32: ${v} in ${this.name}`);
 		});
 	}
 }

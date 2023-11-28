@@ -10,8 +10,8 @@ export default class SInt64PBFField extends NumericPBFField{
 
 	validateValue(value?: number | number[]){
 		this.validateValueCore(value, (v: number) => {
-			if(!Number.isInteger(v)) throw new Error(`Invalid value for fixed64: ${v}`);
-			if(v > Number.MAX_SAFE_INTEGER) console.warn("Value is too large, may be imprecise");
+			if(!Number.isInteger(v)) throw new Error(`Invalid value for fixed64: ${v} in ${this.name}`);
+			if(v > Number.MAX_SAFE_INTEGER) console.warn(`Value is too large in ${this.name}, may be imprecise`);
 		});
 	}
 }

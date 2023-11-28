@@ -7,6 +7,7 @@ export interface PBFFieldOptions{
 	required?: boolean;
 	repeated?: boolean;
 	delimiter?: string;
+	name?: string;
 };
 
 export type SingleEncodedValue = number | string | boolean | undefined;
@@ -23,17 +24,19 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	protected fieldNumberIsLocked: boolean;
 	protected _value?: T | T[];
 	protected options: GenericPBFFieldOptions;
+	name: string;
 	constructor(options: GenericPBFFieldOptions){
 		if(options.fieldNumber){
-			if(!Number.isInteger(options.fieldNumber)) throw new Error(`Invalid field number ${options.fieldNumber}`);
-			if(options.fieldNumber < 1) throw new Error(`Invalid field number ${options.fieldNumber}`);
+			if(!Number.isInteger(options.fieldNumber)) throw new Error(`Invalid field number ${options.fieldNumber} in ${options.name}`);
+			if(options.fieldNumber < 1) throw new Error(`Invalid field number ${options.fieldNumber} in ${options.name}`);
 		}
 		if(options.fieldType){
-			if(options.fieldType.length !== 1) throw new Error(`Invalid field type ${options.fieldType}`);
+			if(options.fieldType.length !== 1) throw new Error(`Invalid field type ${options.fieldType} in ${options.name}`);
 		}
 		if(options.repeated === undefined) options.repeated = false;
 		this.options = options;
 		this.fieldNumberIsLocked = true;
+		this.name = options.name ?? "";
 	}
 	abstract set value(value: T | U | T[] | U[] | undefined);
 	abstract get value(): U | U[];
@@ -47,14 +50,14 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	}
 
 	set fieldNumber(newFieldNumber: number){
-		if(this.fieldNumberIsLocked) throw new Error("You cannot modify a field number once it has been added to a message");
-		if(!Number.isInteger(newFieldNumber)) throw new Error(`Invalid field number ${newFieldNumber}`);
-		if(newFieldNumber < 1) throw new Error(`Invalid field number ${newFieldNumber}`);
+		if(this.fieldNumberIsLocked) throw new Error(`You cannot modify a field number once it has been added to a message in ${this.name}`);
+		if(!Number.isInteger(newFieldNumber)) throw new Error(`Invalid field number ${newFieldNumber} in ${this.name}`);
+		if(newFieldNumber < 1) throw new Error(`Invalid field number ${newFieldNumber} in ${this.name}`);
 		this.options.fieldNumber = newFieldNumber;
 	}
 
 	get fieldNumber(): number{
-		if(!this.options.fieldNumber) throw new Error("Unspecified field number");
+		if(!this.options.fieldNumber) throw new Error(`Unspecified field number in ${this.name}`);
 		return this.options.fieldNumber;
 	}
 
@@ -77,14 +80,14 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		if(value.startsWith(delimiter)){
 			const pattern = new RegExp(`^\\${delimiter}([0-9]+)([a-z])(.*)$`);
 			const matches = value.match(pattern);
-			if(!matches) throw new Error(`Invalid url encoded value ${value}`);
+			if(!matches) throw new Error(`Invalid url encoded value ${value} in ${this.name}`);
 			const fieldNumber = parseInt(matches[1], 10);
-			if(fieldNumber < 1) throw new Error("Invalid field number");
+			if(fieldNumber < 1) throw new Error(`Invalid field number ${fieldNumber} in ${this.name}`);
 			// this should never occur, unless things were constructed in an unfathomably weird manner
-			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error("Field numbers don't match");
+			if(this.options.fieldNumber && this.options.fieldNumber !== fieldNumber) throw new Error(`Field numbers don't match in ${this.name}`);
 			// this should also not happen, since almost all parsing should come from inside a message
 			else if(!this.options.fieldNumber) this.fieldNumber = fieldNumber;
-			if(this.options.fieldType !== matches[2]) throw new Error("Field types don't match");
+			if(this.options.fieldType !== matches[2]) throw new Error(`Field types don't match in ${this.name}`);
 			return matches[3]
 		}
 		return value;
@@ -116,9 +119,9 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	// checks whether a value is valid. overwrite for derived classes
 	validateValue(value?: T | T[]): void{
 		// T is never an array type for simple pbf fields, so this check should eliminate a lot of the problems
-		if(!this.options.repeated && Array.isArray(value)) throw new Error("Non-repeated fields cannot have an array value");
+		if(!this.options.repeated && Array.isArray(value)) throw new Error(`Non-repeated fields cannot have an array value in ${this.name}`);
 		const realValue = value ?? this._value;
-		if(this.options?.required && realValue === undefined) throw new Error("A required field cannot have an undefined value");
+		if(this.options?.required && realValue === undefined) throw new Error(`A required field cannot have an undefined value in ${this.name}`);
 	}
 
 	// encoders and decoders for URL-encoded stuff. only really just strings
@@ -136,9 +139,9 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	// protobuf urls
 
 	toUrl(): string{
-		if(this.options.repeated) throw new Error("Repeated fields cannot be urlencoded");
+		if(this.options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this.name}`);
 		this.validateValue();
-		if(!this.options.fieldType) throw new Error("Please specify a field type before url encoding");
+		if(!this.options.fieldType) throw new Error(`Please specify a field type before url encoding in ${this.name}`);
 		// for urlencoding, empty values can just be left out. DO NOT remove, or else encodeValue will have problems with undefined
 		if(this._value === undefined) return "";
 		if(!this.options.fieldNumber){
@@ -149,7 +152,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	}
 
 	fromUrl(value?: string){
-		if(this.options.repeated) throw new Error("Repeated fields cannot be urlencoded");
+		if(this.options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this.name}`);
 		if(!value) this._value = undefined;
 		let newValue = this.decodeValue(this.parseUrlCore(value));
 		this.validateValue(newValue);
@@ -198,6 +201,6 @@ export class NumericPBFField extends SimplePBFField<number>{
 
 export function extendOptions(fieldType: string, options: PBFFieldOptions){
 	if(!options) return {fieldType};
-	const {fieldNumber, required, delimiter, repeated} = options;
-	return {fieldNumber, required, delimiter, repeated, fieldType};
+	const {fieldNumber, required, delimiter, repeated, name} = options;
+	return {fieldNumber, required, delimiter, repeated, fieldType, name};
 }

@@ -111,7 +111,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		for(let key in description.definition.fields){
 			let field = description.definition.fields[key]
 			const id = field.id;
-			if(this.allIndices[id - 1]) throw new Error("Duplicate field id");
+			if(this.allIndices[id - 1]) throw new Error(`Duplicate field id ${id} in ${this.name}`);
 			this.allIndices[id - 1] = key;
 			if(this.ruleCheck(field.rule, "required")) this.requiredFields.push(key);
 		}
@@ -149,7 +149,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		for(let oneofIndex of this.activeOneofsByKey[key]){
 			const oneof = this.oneofs[oneofIndex];
 			for(let oneofKey of oneof){
-				if(this._value[oneofKey] && oneofKey !== key) throw new Error(`Oneof constraint violation: ${oneof}`);
+				if(this._value[oneofKey] && oneofKey !== key) throw new Error(`Oneof constraint violation in ${this.name}: ${oneof}`);
 			}
 		}
 	}
@@ -157,7 +157,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	// check if required fields are all set
 	protected checkRequired(){
 		for(let key of this.requiredFields){
-			if(!this._value[key]) throw new Error(`Required field ${key} unset`);
+			if(!this._value[key]) throw new Error(`Required field ${key} unset  in ${this.name}`);
 		}
 	}
 
@@ -170,13 +170,13 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			for(let key of oneof){
 				if(this._value[key]) oneofCount += 1;
 			}
-			if(oneofCount !== 1) throw new Error(`Invalid number of values set for oneof ${oneof}`);
+			if(oneofCount !== 1) throw new Error(`Invalid number of values set in ${this.name} for oneof ${oneof}`);
 		}
 	}
 
 	validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
 		if(value === undefined) this.checkValidity();
-		if(this.options.required && this.isUndefined) throw new Error("Required field cannot be undefined");
+		if(this.options.required && this.isUndefined) throw new Error(`Required field cannot be undefined in ${this.name}`);
 		const realValue = value ?? this._value;
 		let fieldNumbers = [];
 		for(let k in realValue){
@@ -194,7 +194,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 					// makes sure that field numbers aren't wrong
 					allIndices.add(valAsField.fieldNumber);
 				}
-				if(allIndices.size > 1) throw new Error("Field numbers don't match up in repeated field " + k);
+				if(allIndices.size > 1) throw new Error(`Field numbers don't match up in repeated field ${this.name}.${k}`);
 				if(allIndices.size === 1){
 					const [realIndex] = allIndices;
 					fieldNumbers.push(realIndex);
@@ -206,7 +206,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			}
 		}
 		if((new Set(fieldNumbers)).size !== fieldNumbers.length){
-			throw new Error("This message has duplicate field numbers");
+			throw new Error(`${this.name} has duplicate field numbers`);
 		}
 	}
 
@@ -225,22 +225,23 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	private create(key: string, createMin?: number){
 		// load some basic definitions
 		const fieldDefinition = this.definition.fields[key];
-		if(!fieldDefinition) throw new Error("Attempting to create non-existent field");
+		if(!fieldDefinition) throw new Error(`Attempting to create non-existent field ${this.name}.${key}`);
 		const fieldNumber = fieldDefinition.id;
-		if(!fieldNumber) throw new Error("All field numbers must be specified");
+		if(!fieldNumber) throw new Error(`Unspecified field number ${this.name}.${key}`);
 		// disallow non-unique field numbers unless this is a repeated message field & we are just creating additional fields
-		if(this.indices[fieldNumber - 1] && (!createMin || this.indices[fieldNumber - 1] !== key)) throw new Error("All field numbers must be unique");
+		if(this.indices[fieldNumber - 1] && (!createMin || this.indices[fieldNumber - 1] !== key)) throw new Error(`All field numbers must be unique in ${this.name}`);
 		this.indices[fieldNumber - 1] = key;
 		const fieldOptions = {
 			fieldNumber,
 			// having a field be both repeated and required is illegal in v3, but i will include handling such incorrect fields for userfriendliness
 			required: this.ruleCheck(fieldDefinition.rule, "required"),
-			repeated: this.ruleCheck(fieldDefinition.rule, "repeated")
+			repeated: this.ruleCheck(fieldDefinition.rule, "repeated"),
+			name: this.name ? this.name + "." + key : key
 		};
 		// create more copies of a message field if createMin is set
 		if(createMin){
 			if(!Array.isArray(this._value[key])){
-				throw new Error("Cannot create copies of a non-repeated or non-message field");
+				throw new Error(`Cannot create copies of a non-repeated or non-message field ${this.name}.${key}`);
 				// this shouldn't cause an issue since createMin is only ever specified after calling create once before
 			}
 			// too many creations, delete some
@@ -260,12 +261,12 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 					newDefinition = allDefinitions[fieldDefinition.type];
 				}
 				else{
-					throw new Error("Non-existent field type");
+					throw new Error(`Non-existent field type ${fieldDefinition.type} in ${this.name}`);
 				}
 			}
 			// a definition is a message iff it has a fields value
 			// by all accounts, this should not be possible based on logic later in the field
-			if(!newDefinition.fields) throw new Error("Trying to repeat a non-message field in the incorrect way -- this should never be possible");
+			if(!newDefinition.fields) throw new Error(`Trying to repeat a non-message field in the incorrect way -- this should never be possible (${this.name}.${key})`);
 			for(let i = this._value[key].length; i < createMin; i++){
 				this._value[key].push(new MessagePBFField(fieldOptions, {
 					parent: this,
@@ -334,7 +335,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 						newDefinition = allDefinitions[fieldDefinition.type];
 					}
 					else{
-						throw new Error("Non-existent field type");
+						throw new Error(`Non-existent field type ${fieldDefinition.type} in ${this.name}.${key}`);
 					}
 				}
 				// enums have a values field
@@ -369,7 +370,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 						}
 					}
 					else{
-						throw new Error("Incomplete definition");
+						throw new Error(`Incomplete definition of ${this.name}.${key}`);
 					}
 				}
 		}
@@ -387,7 +388,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			// the object doesn't exist yet, we need to create it anew
 			if(!this._value[k]){
 				if(Object.keys(this.definition.fields).includes(k)) this.create(k);
-				else throw new Error("Attempting to set non-existent field " + k);
+				else throw new Error(`Attempting to set non-existent field ${this.name}.${k}`);
 			}
 			// checking for oneofs in case there is an error
 			this.testOneofs(k);
@@ -515,12 +516,12 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			// _value already has empty spaces for objects, so calling fromUrl on it works
 			if(key === undefined){
 				key = this.allIndices[i];
-				if(!key) throw new Error(`Invalid index ${i+1}`);
+				if(!key) throw new Error(`Invalid index ${i+1} of ${this.name}`);
 				this.create(key);
 			}
 			// handle oneofs
 			this.testOneofs(key);
-			if(Array.isArray(this._value[key])) throw new Error("Repeated fields cannot be urlencoded");
+			if(Array.isArray(this._value[key])) throw new Error(`Repeated fields cannot be urlencoded in ${this.name}`);
 			this._value[key].fromUrl(value[i] as string);
 		}
 	}

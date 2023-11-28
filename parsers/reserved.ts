@@ -3,7 +3,7 @@ import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core";
 export default class ReservedPBFField extends GenericPBFField<undefined>{
 	constructor(options?: PBFFieldOptions){
 		// doesn't matter, everything is nothing
-		if(options?.repeated) throw new Error("Reserved fields cannot be repeated");
+		if(options?.repeated) throw new Error(`Reserved fields cannot be repeated in ${this.name}`);
 		super(extendOptions("-", options));
 		this.options = options;
 		this._value = undefined;
