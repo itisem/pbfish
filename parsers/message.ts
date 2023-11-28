@@ -471,10 +471,10 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		return delimiter + this.options.fieldNumber.toString() + "m" + encodedValue;
 	}
 
-	private finaliseParsedValue(value: SimpleValue[]): NestedStringArray{
+	private _finaliseParsedValue(value: SimpleValue[]): NestedStringArray{
 		let finalValue: NestedStringArray = [];
 		for(let item of value){
-			if(Array.isArray(item.value)) finalValue[item.index - 1] = this.finaliseParsedValue(item.value);
+			if(Array.isArray(item.value)) finalValue[item.index - 1] = this._finaliseParsedValue(item.value);
 			else finalValue[item.index - 1] = `${this.delimiter ?? defaultDelimiter}${item.index}${item.letter}${item.value}`;
 		}
 		return finalValue;
@@ -513,7 +513,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 					});
 				}
 			}
-			value = this.finaliseParsedValue(parsedValue);
+			value = this._finaliseParsedValue(parsedValue);
 		}
 		// sorting out post parsing
 		for(let i = 0; i < value.length; i++){
