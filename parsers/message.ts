@@ -80,6 +80,8 @@ export interface FieldDefinition{
 }
 
 export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFieldObject, MessagePBFFieldValue, EncodedValueArray>{
+	// dynamically assigned values
+	[index: string]: any;
 	// store the indices of everything in here for easier access in url / array decoding
 	// this should not break unless horribly misused since field numbers get locked once added inside a message
 	indices: string[];
@@ -273,107 +275,112 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 					definition: newDefinition
 				}));
 			}
-			return;
 		}
-		// otherwise, just create a field normally
-		switch(fieldDefinition.type){
-			case "bool":
-				this._value[key] = new BoolPBFField(fieldOptions);
-				break;
-			case "bytes":
-				this._value[key] = new BytesPBFField(fieldOptions);
-				break;
-			case "double":
-				this._value[key] = new DoublePBFField(fieldOptions);
-				break;
-			case "fixed32":
-				this._value[key] = new Fixed32PBFField(fieldOptions);
-				break;
-			case "fixed64":
-				this._value[key] = new Fixed64PBFField(fieldOptions);
-				break;
-			case "float":
-				this._value[key] = new FloatPBFField(fieldOptions);
-				break;
-			case "int32":
-				this._value[key] = new Int32PBFField(fieldOptions);
-				break;
-			case "int64":
-				this._value[key] = new Int64PBFField(fieldOptions);
-				break;
-			case "sfixed32":
-				this._value[key] = new SFixed32PBFField(fieldOptions);
-				break;
-			case "sfixed64":
-				this._value[key] = new SFixed64PBFField(fieldOptions);
-				break;
-			case "sint32":
-				this._value[key] = new SInt32PBFField(fieldOptions);
-				break;
-			case "sint64":
-				this._value[key] = new SInt64PBFField(fieldOptions);
-				break;
-			case "string":
-				this._value[key] = new StringPBFField(fieldOptions);
-				break;
-			case "uint32":
-				this._value[key] = new UInt32PBFField(fieldOptions);
-				break;
-			case "uint64":
-				this._value[key] = new UInt64PBFField(fieldOptions);
-				break;
-			// any other values are messages or enums
-			default:
-				const nestedKeys = Object.keys(this.definition.nested ?? {});
-				let newDefinition: IndividualProtobufDefinition;
-				if(nestedKeys.includes(fieldDefinition.type)){
-					newDefinition = this.definition.nested[fieldDefinition.type];
-				}
-				else{
-					const allDefinitions = this.allDefinitions;
-					if(Object.keys(allDefinitions).includes(fieldDefinition.type)){
-						newDefinition = allDefinitions[fieldDefinition.type];
+		else{
+			// otherwise, just create a field normally
+			switch(fieldDefinition.type){
+				case "bool":
+					this._value[key] = new BoolPBFField(fieldOptions);
+					break;
+				case "bytes":
+					this._value[key] = new BytesPBFField(fieldOptions);
+					break;
+				case "double":
+					this._value[key] = new DoublePBFField(fieldOptions);
+					break;
+				case "fixed32":
+					this._value[key] = new Fixed32PBFField(fieldOptions);
+					break;
+				case "fixed64":
+					this._value[key] = new Fixed64PBFField(fieldOptions);
+					break;
+				case "float":
+					this._value[key] = new FloatPBFField(fieldOptions);
+					break;
+				case "int32":
+					this._value[key] = new Int32PBFField(fieldOptions);
+					break;
+				case "int64":
+					this._value[key] = new Int64PBFField(fieldOptions);
+					break;
+				case "sfixed32":
+					this._value[key] = new SFixed32PBFField(fieldOptions);
+					break;
+				case "sfixed64":
+					this._value[key] = new SFixed64PBFField(fieldOptions);
+					break;
+				case "sint32":
+					this._value[key] = new SInt32PBFField(fieldOptions);
+					break;
+				case "sint64":
+					this._value[key] = new SInt64PBFField(fieldOptions);
+					break;
+				case "string":
+					this._value[key] = new StringPBFField(fieldOptions);
+					break;
+				case "uint32":
+					this._value[key] = new UInt32PBFField(fieldOptions);
+					break;
+				case "uint64":
+					this._value[key] = new UInt64PBFField(fieldOptions);
+					break;
+				// any other values are messages or enums
+				default:
+					const nestedKeys = Object.keys(this.definition.nested ?? {});
+					let newDefinition: IndividualProtobufDefinition;
+					if(nestedKeys.includes(fieldDefinition.type)){
+						newDefinition = this.definition.nested[fieldDefinition.type];
 					}
 					else{
-						throw new Error(`Non-existent field type ${fieldDefinition.type} in ${this.name}.${key}`);
-					}
-				}
-				// enums have a values field
-				if(newDefinition.values){
-					this._value[key] = new EnumPBFField(
-						fieldOptions,
-						// convert from {[value]: [code]} to {code: [code], value: [value]}
-						Object.entries(newDefinition.values).map(x => ({
-							code: x[1],
-							value: x[0]
-						}))
-					);
-				}
-				// messages have a fields field
-				else{
-					// repeated messages are not handled well, so instead, we just create an array of individual messages
-					if(newDefinition.fields){
-						if(!fieldOptions.repeated){
-							this._value[key] = new MessagePBFField(fieldOptions, {
-								parent: this,
-								definition: newDefinition
-							});
+						const allDefinitions = this.allDefinitions;
+						if(Object.keys(allDefinitions).includes(fieldDefinition.type)){
+							newDefinition = allDefinitions[fieldDefinition.type];
 						}
 						else{
-							// creating a single field since .create only gets called when a value is already being set
-							this._value[key] = [
-								new MessagePBFField(fieldOptions, {
-									parent: this,
-									definition: newDefinition
-								})
-							];
+							throw new Error(`Non-existent field type ${fieldDefinition.type} in ${this.name}.${key}`);
 						}
 					}
-					else{
-						throw new Error(`Incomplete definition of ${this.name}.${key}`);
+					// enums have a values field
+					if(newDefinition.values){
+						this._value[key] = new EnumPBFField(
+							fieldOptions,
+							// convert from {[value]: [code]} to {code: [code], value: [value]}
+							Object.entries(newDefinition.values).map(x => ({
+								code: x[1],
+								value: x[0]
+							}))
+						);
 					}
-				}
+					// messages have a fields field
+					else{
+						// repeated messages are not handled well, so instead, we just create an array of individual messages
+						if(newDefinition.fields){
+							if(!fieldOptions.repeated){
+								this._value[key] = new MessagePBFField(fieldOptions, {
+									parent: this,
+									definition: newDefinition
+								});
+							}
+							else{
+								// creating a single field since .create only gets called when a value is already being set
+								this._value[key] = [
+									new MessagePBFField(fieldOptions, {
+										parent: this,
+										definition: newDefinition
+									})
+								];
+							}
+						}
+						else{
+							throw new Error(`Incomplete definition of ${this.name}.${key}`);
+						}
+					}
+			}
 		}
+		// dynamically add property to object
+		let assign: {[key: string]: SingleMessagePBFFieldObject} = {};
+		assign[key] = this._value[key]; 
+		Object.assign(this, assign);
 	}
 
 	set value(value: MessagePBFFieldValue | undefined){
