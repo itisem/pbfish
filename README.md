@@ -21,19 +21,24 @@ const currentLocation = parser.create("Location"); // loads the protobuf definit
 
 You can then use the following methods to parse and manipulate data:
 ```js
-currentLocation.value = {lat: 53.21034178655471, lng: 6.564304111160638, notes: {country: "nl", subdivision: "groningen"}} // loads in a value to the the parser
-currentLocation.toUrl(); // exports a value as a url-encoded protobuf format
-currentLocation.toJSON(); // exports value as a json-encoded protobuf format
-currentLocation.toArray(); // exports value as a json-encoded protobuf format (decoded into an array)
+currentLocation.value = {lat: 53.210, lng: 6.564, notes: {country: "nl", subdivision: "groningen"}} // loads in a value to the the parser
+currentLocation.toUrl(); // exports a value as a url-encoded protobuf format, i.e. "!1d53.210!2d6.564!3m2!1snl!2sgroningen"
+currentLocation.toJSON(); // exports value as a json-encoded protobuf format, i.e. '[53.210,6.564,null,["nl", "groningen"]]'
+currentLocation.toArray(); // exports value as a json-encoded protobuf format (decoded into an array), i.e. [53.210,6.564,undefined,["nl", "groningen"]]
 currentLocation.fromUrl("!1d53.21034178655471!2d6.564304111160638!3m2!1snl!2sgroningen"); // loads a value from a url-encoded format
-currentLocation.fromJSON(); // loads a value from a json-encoded protobuf format (unparsed)
-currentLocation.fromArray(parsedJSON); // loads a value from a json-encoded protobuf format (decoded into an array)
+currentLocation.fromJSON('[53.21034178655471,6.56430411111160638,null,["nl", "groningen"]]'); // loads a value from a json-encoded protobuf format (decoded into an array)
+currentLocation.fromArray([53.21034178655471,6.56430411111160638,undefined,["nl", "groningen"]]); // loads a value from a json-encoded protobuf format (unparsed)
 ```
 
-You can also access data as follows:
+You can also access the entire data by using `.value`, i.e.
 ```js
-currentLocation.value; // returns the entire value of the data
-currentLocation.notes.subdivision; // returns the data within {notes : {subdivision: ...}}
+currentLocation.value // returns the entire value of the data, i.e. {lat: 53.210, lng: 6.564, notes: {country: "nl", subdivision: "groningen"}}
+```
+
+Specific data points can be accessed with dot accessors, i.e.
+```js
+currentLocation.notes // returns {country: "nl", subdivision: "groningen"}
+currentLocation.notes.country // returns "nl"
 ```
 
 ## Limitations
