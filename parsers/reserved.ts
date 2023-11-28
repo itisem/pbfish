@@ -4,8 +4,7 @@ export default class ReservedPBFField extends GenericPBFField<undefined>{
 	constructor(options?: PBFFieldOptions){
 		super(extendOptions("-", options));
 		// doesn't matter, everything is nothing
-		if(options?.repeated) throw new Error(`Reserved fields cannot be repeated in ${this.name}`);
-		this.options = options;
+		if(options?.repeated) throw new Error(`Reserved fields cannot be repeated in ${this._name}`);
 		this._value = undefined;
 	}
 
@@ -17,7 +16,7 @@ export default class ReservedPBFField extends GenericPBFField<undefined>{
 		return undefined;
 	}
 
-	validateValue(value: undefined){
+	_validateValue(value: undefined){
 		return;
 	}
 

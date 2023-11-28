@@ -6,11 +6,11 @@ export default class Int32PBFField extends NumericPBFField{
 		super(extendOptions("i", options));
 	}
 
-	validateValue(value?: number | number[]){
-		this.validateValueCore(value, (v: number) => {
-			if(!Number.isInteger(v)) throw new Error(`Invalid value for int32: ${v} in ${this.name}`);
-			if(v < -2147483648) throw new Error(`Invalid value for int32: ${v} in ${this.name}`);
-			if(v > 2147483647) throw new Error(`Invalid value for int32: ${v} in ${this.name}`);
+	_validateValue(value?: number | number[]){
+		this._validateValueCore(value, (v: number) => {
+			if(!Number.isInteger(v)) throw new Error(`Invalid value for int32: ${v} in ${this._name}`);
+			if(v < -2147483648) throw new Error(`Invalid value for int32: ${v} in ${this._name}`);
+			if(v > 2147483647) throw new Error(`Invalid value for int32: ${v} in ${this._name}`);
 		});
 	}
 

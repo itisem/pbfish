@@ -7,11 +7,11 @@ export default class UInt64PBFField extends NumericPBFField{
 		super(extendOptions("v", options));
 	}
 
-	validateValue(value?: number | number[]){
-		this.validateValueCore(value, (v: number) => {
-			if(!Number.isInteger(v)) throw new Error(`Invalid value for fixed64: ${v} in ${this.name}`);
-			if(v < 0) throw new Error(`Invalid value for fixed64: ${v} in ${this.name}`);
-			if(v > Number.MAX_SAFE_INTEGER) console.warn(`Value is too large in ${this.name}, may be imprecise`);
+	_validateValue(value?: number | number[]){
+		this._validateValueCore(value, (v: number) => {
+			if(!Number.isInteger(v)) throw new Error(`Invalid value for fixed64: ${v} in ${this._name}`);
+			if(v < 0) throw new Error(`Invalid value for fixed64: ${v} in ${this._name}`);
+			if(v > Number.MAX_SAFE_INTEGER) console.warn(`Value is too large in ${this._name}, may be imprecise`);
 		});
 	}
 }

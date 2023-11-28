@@ -6,7 +6,7 @@ export default class BoolPBFField extends SimplePBFField<boolean>{
 		super(extendOptions("b", options));
 	}
 
-	decodeValue(value?: string): boolean | undefined{
+	_decodeValue(value?: string): boolean | undefined{
 		if(value === "" || value === undefined) return undefined;
 		return value === "true";
 	}

@@ -5,18 +5,18 @@ export default class StringPBFField extends SimplePBFField<string>{
 		super(extendOptions("s", options));
 	}
 
-	protected encodeValue(value?: string | string[]): string{
+	protected _encodeValue(value?: string | string[]): string{
 		const realValue = value ?? this._value;
-		const delimiter = this.options.delimiter ?? defaultDelimiter;
+		const delimiter = this._options.delimiter ?? defaultDelimiter;
 		const encodedDelimiter = "*" + delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
 		if(!realValue) return undefined;
 		return encodeURIComponent(realValue.toString()).replaceAll("*", "*2A").replaceAll(delimiter, encodedDelimiter);
 	}
 
 	// does NOT handle full urls, just the decoding (for strings)
-	protected decodeValue(value?: string | undefined): string | undefined{
+	protected _decodeValue(value?: string | undefined): string | undefined{
 		if(value === undefined) return undefined;
-		const delimiter = this.options.delimiter ?? defaultDelimiter;
+		const delimiter = this._options.delimiter ?? defaultDelimiter;
 		const encodedDelimiter = delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
 		return decodeURIComponent(value.replaceAll(encodedDelimiter, delimiter).replaceAll("*2A", "*"));
 	}
