@@ -21,22 +21,30 @@ import UInt64PBFField from "./uint64";
 // full descriptions of valid pbf fields and baseValues. primarily used for manually made classes
 export type PBFField = GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, AnyEncodedValue | MessagePBFFieldValue, AnyEncodedValue>;
 
+// a single object
 export interface SingleMessagePBFFieldObject{
 	[key: string]: PBFField;
 };
 
+// specifically a message pbf field object
 export type MessagePBFFieldObject = SingleMessagePBFFieldObject | SingleMessagePBFFieldObject[];
 
+// additional options for message pbf fields
 export interface MessagePBFFieldDescriptor{
 	definition: IndividualProtobufDefinition;
 	parent?: MessagePBFField;
 	allDefinitions?: ManyProtobufDefinitions;
 }
 
+// the values what are being loaded in while doing a .value
 export interface MessagePBFFieldValue{
 	[key: string]: AnyEncodedValue | MessagePBFFieldValue | (AnyEncodedValue | MessagePBFFieldValue)[];
 };
 
+// every individual property's type
+export type MessagePBFFieldProperty = PBFField | MessagePBFFieldValue;
+
+// any layers of strings
 export type NestedStringArray = string | undefined | NestedStringArray[];
 
 // interface used temporarily while parsing values
@@ -51,10 +59,12 @@ export interface ProtobufDefinition{
 	nested: ManyProtobufDefinitions;
 }
 
+// a list of indexed protobuf definitions
 export interface ManyProtobufDefinitions{
 	[key: string]: IndividualProtobufDefinition;
 }
 
+// a single definition of any type
 export interface IndividualProtobufDefinition{
 	/////// message definitions
 	// all fields within that message
@@ -73,6 +83,8 @@ export interface IndividualProtobufDefinition{
 		[key: string]: number;
 	}
 }
+
+// a single field within a definition
 export interface FieldDefinition{
 	rule?: string; // required, repeated
 	type: string;
@@ -164,7 +176,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	// check if required fields are all set, and oneofs have exactly one value set
 	// not to be confused with _validateValue which does further validation
-	protected checkValidity(){
+	protected _checkValidity(){
 		this._checkRequired();
 		for(let oneof of this._oneofs){
 			let oneofCount = 0;
@@ -176,7 +188,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	_validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
-		if(value === undefined) this.checkValidity();
+		if(value === undefined) this._checkValidity();
 		if(this.options.required && this._isUndefined) throw new Error(`Required field cannot be undefined in ${this._name}`);
 		const realValue = value ?? this._value;
 		let fieldNumbers = [];
@@ -377,8 +389,29 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			}
 		}
 		// dynamically add property to object
-		let assign: {[key: string]: SingleMessagePBFFieldObject} = {};
-		assign[key] = this._value[key]; 
+	}
+
+	// checks whether or not the value corresponds to a message pbf field
+	// this is based on the fact that all normal fields have a "normal" value (i.e. ints, strings, arrays of ints / strings)
+	// while message fields have an object value
+	protected _checkIfMessageField(value?: any){
+		if(typeof value === "object"){
+			if(value === null) return false;
+			// array values are *never* message pbf fields since repetition is handled differently for those
+			if(Array.isArray(value)) return false;
+			else return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	protected _setProperty(key){
+		let assign: {[k: string]: MessagePBFFieldProperty | MessagePBFFieldProperty[]} = {};
+		const value = this._value[key];
+		// array values in _value only exist for message fields, so we just pass along the references
+		if(Array.isArray(value)) assign = this._value[key];
+		else this._checkIfMessageField(value.value) ? assign[key] = this._value[key] : assign[key] = this._value[key].value;
 		Object.assign(this, assign);
 	}
 
@@ -387,6 +420,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		if(value === undefined){
 			for(let [k,v] of Object.entries(this._value)){
 				this._value[k].value = undefined;
+				// change property value
+				this._setProperty(k);
 			}
 		}
 		// otherwise, set values, or add new fields depending on what we have
@@ -408,11 +443,13 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			else{
 				this._value[k].value = v;
 			}
+			// change property value for easier access
+			this._setProperty(k);
 		}
 	}
 
 	get value(): MessagePBFFieldValue{
-		this.checkValidity();
+		this._checkValidity();
 		if(this._value === undefined) return undefined;
 		return Object.fromEntries(
 			Object.entries(this._value).map(([k, v]) => {
@@ -529,6 +566,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			this._testOneofs(key);
 			if(Array.isArray(this._value[key])) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
 			this._value[key].fromUrl(value[i] as string);
+			// finally, update property value
+			this._setProperty(key);
 		}
 	}
 
@@ -541,11 +580,11 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				if(v.length === 0) return undefined; // empty array = nothing to return
 				// assumes that all field numbers are identical
 				// which should be the case unless field numbers are manually unlocked for whatever bizarre reason
-				encodedValue[v[0].fieldNumber - 1] = v.map(x => x.toArray());
+				encodedValue[v[0]._fieldNumber - 1] = v.map(x => x.toArray());
 			}
 			// otherwise, encode the field normally
 			else{
-				encodedValue[v.fieldNumber - 1] = v.toArray();
+				encodedValue[v._fieldNumber - 1] = v.toArray();
 			}
 		}
 		return encodedValue;
@@ -581,6 +620,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 					// @ts-ignore
 					this._value[key].fromArray(v);
 				}
+				// finally, update property value
+				this._setProperty(key);
 			}
 			// not erroring when the key is undefined
 			// since it is possible to have incomplete / partial definitions

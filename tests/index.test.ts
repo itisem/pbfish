@@ -137,7 +137,7 @@ describe("can load large definitions", () => {
 		};
 		const endTime = Date.now();
 		expect(endTime - startTime).toBeLessThan(100);
-		expect(request.location.center.lat.value).toEqual(53.210243);
+		expect(request.location.center.lat).toEqual(53.210243);
 		expect(request.toArray()).toEqual([
 			["apiv3"],
 			[[undefined,undefined,53.210243,6.564092],500],
@@ -155,7 +155,7 @@ describe("can load large definitions", () => {
 			[undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[[[2,true,2]]]],
 			[[2,6]]
 		]);
-		expect(request.location.center.lat.value).toEqual(53.210243);
+		expect(request.location.center.lat).toEqual(53.210243);
 		expect(request.value).toMatchObject({
 			context: {
 				productId: "apiv3"
