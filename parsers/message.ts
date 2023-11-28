@@ -407,7 +407,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	protected _setProperty(key){
-		const setKey = typeof this[key] === "function" ? "__" + key : key;
+		const setKey = typeof this[key] === "function" || key === "value" ? "__" + key : key;
 		let assign: {[k: string]: MessagePBFFieldProperty | MessagePBFFieldProperty[]} = {};
 		const value = this._value[key];
 		// array values in _value only exist for message fields, so we just pass along the references

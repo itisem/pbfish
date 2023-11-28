@@ -30,6 +30,12 @@ currentLocation.fromJSON(); // loads a value from a json-encoded protobuf format
 currentLocation.fromArray(parsedJSON); // loads a value from a json-encoded protobuf format (decoded into an array)
 ```
 
+You can also access data as follows:
+```js
+currentLocation.value; // returns the entire value of the data
+currentLocation.notes.subdivision; // returns the data within {notes : {subdivision: ...}}
+```
+
 ## Limitations
 
 For any project that does not involve Google Maps, you will usually get better results if you use a standard protobuf format, rather than these alternative encodings. If you wish to do so, I recommend the [pbf](https://www.npmjs.com/package/pbf) module.
