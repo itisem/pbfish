@@ -169,6 +169,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	// check if required fields are all set
 	protected _checkRequired(){
+		// this is the equivalent of an undefined value
+		if(Object.keys(this._value).length === 0) return;
 		for(let key of this._requiredFields){
 			if(!this._value[key]) throw new Error(`Required field ${key} unset  in ${this._name}`);
 		}
@@ -574,6 +576,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	toArray(): EncodedValueArray{
 		this._validateValue();
+		// this is the equivalent of an undefined value
+		if(Object.keys(this._value).length === 0) return undefined;
 		let encodedValue: AnyEncodedValue = [];
 		for(let [k, v] of Object.entries(this._value)){
 			// for repeated message fields, encode them separately
