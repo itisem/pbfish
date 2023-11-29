@@ -593,7 +593,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	fromArray(value?: EncodedValueArray){
 		if(value === undefined || value === null){
-			this._value = undefined;
+			this._value = {};
 			return;
 		}
 		for(let [index, v] of value.entries()){

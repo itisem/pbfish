@@ -31,6 +31,18 @@ currentLocation.fromJSON('[53.21034178655471,6.56430411111160638,null,["nl", "gr
 currentLocation.fromArray([53.21034178655471,6.56430411111160638,undefined,["nl", "groningen"]]); // loads a value from a json-encoded protobuf format (unparsed)
 ```
 
+For enums, you can use either their numerical value or literal text value, i.e. if you have an enum defined as
+```json
+"ImageFrontendType": {
+	"values": {
+		"OFFICIAL": 2,
+		"UNKNOWN": 3,
+		"USER_UPLOADED": 10
+	}
+}
+```
+, you can set its value to be either `2` or the string `"OFFICIAL"`.
+
 You can also access the entire data by using `.value`, i.e.
 ```js
 currentLocation.value // returns the entire value of the data, i.e. {lat: 53.210, lng: 6.564, notes: {country: "nl", subdivision: "groningen"}}
