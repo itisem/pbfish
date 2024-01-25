@@ -54,6 +54,8 @@ currentLocation.notes // returns {country: "nl", subdivision: "groningen"}
 currentLocation.notes.country // returns "nl"
 ```
 
+As of now, my current list of reverse engineered protobuf definitions is not publicly available, but I will share them soon, hopefully.
+
 ## Limitations
 
 For any project that does not involve Google Maps, you will usually get better results if you use a standard protobuf format, rather than these alternative encodings. If you wish to do so, I recommend the [pbf](https://www.npmjs.com/package/pbf) module since it is very performant.
