@@ -1,4 +1,4 @@
-import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, defaultDelimiter, URLEncodedValue} from "./core";
+import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, URLEncodedValue, defaultDelimiter} from "./core";
 
 // all other parsers, to be used for .from()
 import BoolPBFField from "./bool";
@@ -492,7 +492,6 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	private _encodeValue(value?: MessagePBFFieldObject): {value: string, fieldCount: number}{
-		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		const realValue = value ?? this._value;
 		const valuesThatExist = Object.entries(realValue).filter(([k, v]) => !v._isUndefined);
 		if(valuesThatExist.length === 0) return {value: "", fieldCount: 0};
@@ -525,9 +524,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		// if this doesn't have a field number, then the encoded value is the url format in itself
 		if(!this.options.fieldNumber) return encodedValue.value;
 		// otherwise, append the delimiter and return information about the field count
-		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		return {
-			value: delimiter + this.options.fieldNumber.toString() + "m" + encodedValue.value,
+			value: this.options.delimiter + this.options.fieldNumber.toString() + "m" + encodedValue.value,
 			fieldCount: encodedValue.fieldCount
 		};
 	}
@@ -536,17 +534,16 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		let finalValue: NestedStringArray = [];
 		for(let item of value){
 			if(Array.isArray(item.value)) finalValue[item.index - 1] = this._finaliseParsedValue(item.value);
-			else finalValue[item.index - 1] = `${this.delimiter ?? defaultDelimiter}${item.index}${item.letter}${item.value}`;
+			else finalValue[item.index - 1] = `${this.options.delimiter}${item.index}${item.letter}${item.value}`;
 		}
 		return finalValue;
 	}
 
 	fromUrl(value?: NestedStringArray){
 		if(value === undefined || value === "") return;
-		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		// the url needs to be broken into chunks
 		if(!Array.isArray(value)){
-			let arrayValue = value.split(delimiter);
+			let arrayValue = value.split(this.options.delimiter);
 			let parsedValue: SimpleValue[] = [];
 			for(let individualValue of arrayValue.reverse()){
 				if(individualValue === "") continue;

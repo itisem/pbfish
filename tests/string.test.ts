@@ -74,4 +74,9 @@ describe("string pbf fields", () => {
 		expect(repeatedTester.value).toEqual(["hello", "world"]);
 		expect(() => repeatedTester.fromUrl("!3sNICE")).toThrow()
 	});
+	test("helper functions that have not been tested yet", () => {
+		const tester = new StringPBFField({fieldNumber: 3});
+		expect(tester["_encodeValue"]()).toBeUndefined();
+		expect(tester["_decodeValue"]()).toBeUndefined();
+	})
 });

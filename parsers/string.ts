@@ -1,4 +1,4 @@
-import {SimplePBFField, extendOptions, PBFFieldOptions, defaultDelimiter} from "./core";
+import {SimplePBFField, extendOptions, PBFFieldOptions} from "./core";
 
 export default class StringPBFField extends SimplePBFField<string>{
 	constructor(options?: PBFFieldOptions){
@@ -7,17 +7,15 @@ export default class StringPBFField extends SimplePBFField<string>{
 
 	protected _encodeValue(value?: string | string[]): string{
 		const realValue = value ?? this._value;
-		const delimiter = this._options.delimiter ?? defaultDelimiter;
-		const encodedDelimiter = "*" + delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
+		const encodedDelimiter = "*" + this._options.delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
 		if(!realValue) return undefined;
-		return encodeURIComponent(realValue.toString()).replaceAll("*", "*2A").replaceAll(delimiter, encodedDelimiter);
+		return encodeURIComponent(realValue.toString()).replaceAll("*", "*2A").replaceAll(this._options.delimiter, encodedDelimiter);
 	}
 
 	// does NOT handle full urls, just the decoding (for strings)
 	protected _decodeValue(value?: string | undefined): string | undefined{
 		if(value === undefined) return undefined;
-		const delimiter = this._options.delimiter ?? defaultDelimiter;
-		const encodedDelimiter = delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
-		return decodeURIComponent(value.replaceAll(encodedDelimiter, delimiter).replaceAll("*2A", "*"));
+		const encodedDelimiter = this._options.delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
+		return decodeURIComponent(value.replaceAll(encodedDelimiter, this._options.delimiter).replaceAll("*2A", "*"));
 	}
 }

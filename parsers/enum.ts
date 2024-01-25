@@ -1,4 +1,4 @@
-import {GenericPBFField, extendOptions, PBFFieldOptions, defaultDelimiter} from "./core";
+import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core";
 
 export interface PBFEnum{
 	code: number;
@@ -100,8 +100,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		if(!this._options.fieldNumber){
 			return this._encodeValue();
 		}
-		const delimiter = this._options.delimiter ?? defaultDelimiter;
-		return delimiter + this._options.fieldNumber.toString() + "e" + this._encodeValue();
+		return this._options.delimiter + this._options.fieldNumber.toString() + "e" + this._encodeValue();
 	}
 
 	fromUrl(value?: string){

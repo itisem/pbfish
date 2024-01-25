@@ -1,14 +1,26 @@
-export interface GenericPBFFieldOptions extends PBFFieldOptions{
+export interface GenericPBFFieldOptions extends DelimiterRequiredPBFFieldsOptions{
 	fieldType?: string;
 };
 
-export interface PBFFieldOptions{
+export interface PBFFieldOptions extends BasePBFFieldOptions{
 	fieldNumber?: number;
 	required?: boolean;
 	repeated?: boolean;
 	delimiter?: string;
 	name?: string;
 };
+
+interface DelimiterRequiredPBFFieldsOptions extends BasePBFFieldOptions{
+	delimiter: string;
+}
+
+interface BasePBFFieldOptions{
+	fieldNumber?: number;
+	required?: boolean;
+	repeated?: boolean;
+	name?: string;
+};
+
 
 export interface URLEncodedValue{
 	value: string;
@@ -72,7 +84,7 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		else this._options.delimiter = newDelimiter;
 	}
 	get _delimiter(): string{
-		return this._options.delimiter ?? defaultDelimiter;
+		return this._options.delimiter;
 	}
 
 	// not protected since parent classes may need it, but should not be publicly needed
@@ -82,9 +94,8 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 
 	protected _parseUrlCore(value?: string): string{
 		if(value === undefined || value === "") return;
-		const delimiter = this._options.delimiter ?? defaultDelimiter;
-		if(value.startsWith(delimiter)){
-			const pattern = new RegExp(`^\\${delimiter}([0-9]+)([a-z])(.*)$`);
+		if(value.startsWith(this._options.delimiter)){
+			const pattern = new RegExp(`^\\${this._options.delimiter}([0-9]+)([a-z])(.*)$`);
 			const matches = value.match(pattern);
 			if(!matches) throw new Error(`Invalid url encoded value ${value} in ${this._name}`);
 			const fieldNumber = parseInt(matches[1], 10);
@@ -153,8 +164,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		if(!this._options.fieldNumber){
 			return this._encodeValue();
 		}
-		const delimiter = this._options.delimiter ?? defaultDelimiter;
-		return delimiter + this._options.fieldNumber.toString() + this._options.fieldType + this._encodeValue();
+		return this._options.delimiter + this._options.fieldNumber.toString() + this._options.fieldType + this._encodeValue();
 	}
 
 	fromUrl(value?: string){
@@ -205,8 +215,8 @@ export class NumericPBFField extends SimplePBFField<number>{
 	}
 }
 
-export function extendOptions(fieldType: string, options: PBFFieldOptions){
-	if(!options) return {fieldType};
+export function extendOptions(fieldType: string, options: PBFFieldOptions): GenericPBFFieldOptions{
+	if(!options) return {fieldType, delimiter: "?"};
 	const {fieldNumber, required, delimiter, repeated, name} = options;
-	return {fieldNumber, required, delimiter, repeated, fieldType, name};
+	return {fieldNumber, required, delimiter: delimiter ?? defaultDelimiter, repeated, fieldType, name};
 }
