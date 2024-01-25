@@ -1,4 +1,4 @@
-import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, defaultDelimiter} from "./core";
+import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, defaultDelimiter, URLEncodedValue} from "./core";
 
 // all other parsers, to be used for .from()
 import BoolPBFField from "./bool";
@@ -491,24 +491,45 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		return true;
 	}
 
-	private _encodeValue(value?: MessagePBFFieldObject): string{
+	private _encodeValue(value?: MessagePBFFieldObject): {value: string, fieldCount: number}{
+		const delimiter = this.options.delimiter ?? defaultDelimiter;
 		const realValue = value ?? this._value;
 		const valuesThatExist = Object.entries(realValue).filter(([k, v]) => !v._isUndefined);
-		if(valuesThatExist.length === 0) return "";
+		if(valuesThatExist.length === 0) return {value: "", fieldCount: 0};
 		// the value of the field itself is how many values it contains, and then append the url encoding of those values
-		// don't include total count if the field number is unset
-		const fieldCountString = this.options.fieldNumber ? valuesThatExist.length.toString() : "";
-		// if any field is repeated, this will just throw an error by itself
-		return fieldCountString + valuesThatExist.map(([k, v]) => v.toUrl()).join("");
+		const encoded = valuesThatExist.map(([k, v]) => v.toUrl());
+		// NOTE: the way google maps parses, all sub-fields are also included in the count
+		const fieldCount = encoded.reduce(
+			// for every encoded value, add its count of delimiters to the total count
+			// if the encoded value is a string, it must have come from a simple field (i.e. int64), and thus is already in .length
+			// since messages will return URLEncodedValue if they have a field number
+			(acc, val) => typeof val === "string" ? acc : acc + val.fieldCount,
+			// also add the newly encoded values to the count
+			valuesThatExist.length
+		);
+		// if this is the main thing, no need for field counts, otherwise, add it to the string
+		const fieldCountString = this.options.fieldNumber ? fieldCount.toString() : "";
+		// finalise everything, handle URLEncodedValue types
+		const finalValue = fieldCountString + encoded.map(x => typeof x === "string" ? x : x.value).join("");
+		// if any field is repeated, this will just throw an error by itself. no need to add the delimiter since it will append that here itself
+		return {
+			value: finalValue,
+			fieldCount
+		};
 	}
 
-	toUrl(): string{
+	toUrl(): string | URLEncodedValue{
 		this._validateValue();
 		const encodedValue = this._encodeValue();
-		if(encodedValue === "") return "";
-		if(!this.options.fieldNumber) return encodedValue;
+		if(encodedValue.value === "") return "";
+		// if this doesn't have a field number, then the encoded value is the url format in itself
+		if(!this.options.fieldNumber) return encodedValue.value;
+		// otherwise, append the delimiter and return information about the field count
 		const delimiter = this.options.delimiter ?? defaultDelimiter;
-		return delimiter + this.options.fieldNumber.toString() + "m" + encodedValue;
+		return {
+			value: delimiter + this.options.fieldNumber.toString() + "m" + encodedValue.value,
+			fieldCount: encodedValue.fieldCount
+		};
 	}
 
 	private _finaliseParsedValue(value: SimpleValue[]): NestedStringArray{

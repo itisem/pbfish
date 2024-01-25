@@ -75,17 +75,17 @@ describe("loading simple definitions", () => {
 		const parser = new pbfish(goodDefinition);
 		const location = parser.create("Location");
 		location.value = {lat: 1, lng: 2, info: {address: {country: "nl", building: "RESIDENTIAL"}}};
-		expect(location.toUrl()).toEqual("!1d1!2d2!3m1!1m2!1snl!3e1");
+		expect(location.toUrl()).toEqual("!1d1!2d2!3m3!1m2!1snl!3e1");
 		const location2 = parser.create("Location");
 		location2.value = {lat: 3, lng: 4, info: {address: {country: "de", building: "COMMERCIAL"}}};
-		expect(location.toUrl()).toEqual("!1d1!2d2!3m1!1m2!1snl!3e1");
-		expect(location2.toUrl()).toEqual("!1d3!2d4!3m1!1m2!1sde!3e2");
+		expect(location.toUrl()).toEqual("!1d1!2d2!3m3!1m2!1snl!3e1");
+		expect(location2.toUrl()).toEqual("!1d3!2d4!3m3!1m2!1sde!3e2");
 	});
 	it("loads correct definitions even if they are strings", () => {
 		const parser = new pbfish(JSON.stringify(goodDefinition));
 		const location = parser.create("Location");
 		location.value = {lat: 1, lng: 2, info: {address: {country: "nl"}}};
-		expect(location.toUrl()).toEqual("!1d1!2d2!3m1!1m1!1snl");
+		expect(location.toUrl()).toEqual("!1d1!2d2!3m2!1m1!1snl");
 	})
 	it("fails to load incorrect definitions", () => {
 		const parser = new pbfish(badDefinition);

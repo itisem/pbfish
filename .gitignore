@@ -1,0 +1,9 @@
+# packages
+package-lock.json
+node_modules
+
+# tests
+coverage
+
+# output
+dist

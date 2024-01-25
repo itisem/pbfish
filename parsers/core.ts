@@ -10,6 +10,11 @@ export interface PBFFieldOptions{
 	name?: string;
 };
 
+export interface URLEncodedValue{
+	value: string;
+	fieldCount: number;
+}
+
 export type SingleEncodedValue = number | string | boolean | undefined;
 
 export type EncodedValueArray = (EncodedValueArray | SingleEncodedValue)[];
@@ -94,7 +99,7 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		return value;
 	}
 	abstract _validateValue(value?: T | T[]): void;
-	abstract toUrl(): string;
+	abstract toUrl(): string | URLEncodedValue;
 	abstract fromUrl(value?: string): void;
 	abstract toArray(): V | V[] | undefined;
 	abstract fromArray(value?: V | V[]): void;
