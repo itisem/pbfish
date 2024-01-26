@@ -167,7 +167,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	// check if required fields are all set, and oneofs have exactly one value set
-	// not to be confused with _validateValue which does further validation
+	// not to be confused with .validateValue which does further validation
 	protected _checkValidity(){
 		this._checkRequired();
 		for(let oneof of this._oneofs){
@@ -179,9 +179,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		}
 	}
 
-	_validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
+	validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
 		if(value === undefined) this._checkValidity();
-		if(this.options.required && this._isUndefined) throw new Error(`Required field cannot be undefined in ${this._name}`);
+		if(this.options.required && this.isUndefined) throw new Error(`Required field cannot be undefined in ${this._name}`);
 		const realValue = value ?? this._value;
 		let fieldNumbers = [];
 		for(let k in realValue){
@@ -195,9 +195,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 						continue;
 					}
 					let valAsField = val as PBFField;
-					valAsField._validateValue();
+					valAsField.validateValue();
 					// makes sure that field numbers aren't wrong
-					allIndices.add(valAsField._fieldNumber);
+					allIndices.add(valAsField.fieldNumber);
 				}
 				if(allIndices.size > 1) throw new Error(`Field numbers don't match up in repeated field ${this._name}.${k}`);
 				if(allIndices.size === 1){
@@ -206,8 +206,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				}
 			}
 			else{
-				v._validateValue();
-				fieldNumbers.push(v._fieldNumber);
+				v.validateValue();
+				fieldNumbers.push(v.fieldNumber);
 			}
 		}
 		if((new Set(fieldNumbers)).size !== fieldNumbers.length){
@@ -221,8 +221,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	// returns the whole protobuf definition. used in constructing stuff
-	get _allDefinitions(): ManyProtobufDefinitions{
-		if(this._parent) return this._parent._allDefinitions;
+	get allDefinitions(): ManyProtobufDefinitions{
+		if(this._parent) return this._parent.allDefinitions;
 		return this._everyDefinition;
 	}
 
@@ -261,9 +261,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				newDefinition = this._definition.nested[fieldDefinition.type];
 			}
 			else{
-				const _allDefinitions = this._allDefinitions;
-				if(Object.keys(_allDefinitions).includes(fieldDefinition.type)){
-					newDefinition = _allDefinitions[fieldDefinition.type];
+				const allDefinitions = this.allDefinitions;
+				if(Object.keys(allDefinitions).includes(fieldDefinition.type)){
+					newDefinition = allDefinitions[fieldDefinition.type];
 				}
 				else{
 					throw new Error(`Non-existent field type ${fieldDefinition.type} in ${this._name}`);
@@ -335,9 +335,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 						newDefinition = this._definition.nested[fieldDefinition.type];
 					}
 					else{
-						const _allDefinitions = this._allDefinitions;
-						if(Object.keys(_allDefinitions).includes(fieldDefinition.type)){
-							newDefinition = _allDefinitions[fieldDefinition.type];
+						const allDefinitions = this.allDefinitions;
+						if(Object.keys(allDefinitions).includes(fieldDefinition.type)){
+							newDefinition = allDefinitions[fieldDefinition.type];
 						}
 						else{
 							throw new Error(`Non-existent field type ${fieldDefinition.type} in ${this._name}.${key}`);
@@ -452,30 +452,30 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		);
 	}
 
-	set _delimiter(newDelimiter: string | undefined){
+	set delimiter(newDelimiter: string | undefined){
 		const realNewDelimiter = newDelimiter ?? defaultDelimiter;
 		this.options.delimiter = realNewDelimiter;
 		for(let [k, v] of Object.entries(this._value)){
 			if(!Array.isArray(v)){
-				v._delimiter = realNewDelimiter;
+				v.delimiter = realNewDelimiter;
 			}
 			else{
 				for(let val of v){
-					val._delimiter = realNewDelimiter;
+					val.delimiter = realNewDelimiter;
 				}
 			}
 		}
 	}
 
-	get _isUndefined(){
+	get isUndefined(){
 		for(let [k, v] of Object.entries(this._value)){
 			if(Array.isArray(v)){
 				for(let val of v){
-					if(!val._isUndefined) return false;
+					if(!val.isUndefined) return false;
 				}
 			}
 			else{
-				if(!v._isUndefined) return false;
+				if(!v.isUndefined) return false;
 			}
 		}
 		return true;
@@ -483,7 +483,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	private _encodeValue(value?: MessagePBFFieldObject): {value: string, fieldCount: number}{
 		const realValue = value ?? this._value;
-		const valuesThatExist = Object.entries(realValue).filter(([k, v]) => !v._isUndefined);
+		const valuesThatExist = Object.entries(realValue).filter(([k, v]) => !v.isUndefined);
 		if(valuesThatExist.length === 0) return {value: "", fieldCount: 0};
 		// the value of the field itself is how many values it contains, and then append the url encoding of those values
 		const encoded = valuesThatExist.map(([k, v]) => v.toUrl());
@@ -508,7 +508,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	toUrl(): string | URLEncodedValue{
-		this._validateValue();
+		this.validateValue();
 		const encodedValue = this._encodeValue();
 		if(encodedValue.value === "") return "";
 		// if this doesn't have a field number, then the encoded value is the url format in itself
@@ -578,7 +578,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				// repeated fields are not valid
 				if(Array.isArray(this._value[key])) throw new Error(`Cannot urldecode repeated field ${key} in ${this.name}`);
 				// check for letter equivalence
-				if(this._value[key]._fieldType !== value.letter) throw new Error(`Invalid field type ${value.letter} for ${this._value[key]._fieldType}`);
+				if(this._value[key].fieldType !== value.letter) throw new Error(`Invalid field type ${value.letter} for ${this._value[key].fieldType}`);
 				// parse the value as a urlencoded thing
 				this._value[key].fromUrl(value.value);
 			}
@@ -586,7 +586,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	toArray(): EncodedValueArray{
-		this._validateValue();
+		this.validateValue();
 		// this is the equivalent of an undefined value
 		if(Object.keys(this._value).length === 0) return undefined;
 		let encodedValue: AnyEncodedValue = [];
@@ -596,11 +596,11 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				if(v.length === 0) return undefined; // empty array = nothing to return
 				// assumes that all field numbers are identical
 				// which should be the case unless field numbers are manually unlocked for whatever bizarre reason
-				encodedValue[v[0]._fieldNumber - 1] = v.map(x => x.toArray());
+				encodedValue[v[0].fieldNumber - 1] = v.map(x => x.toArray());
 			}
 			// otherwise, encode the field normally
 			else{
-				encodedValue[v._fieldNumber - 1] = v.toArray();
+				encodedValue[v.fieldNumber - 1] = v.toArray();
 			}
 		}
 		return encodedValue;

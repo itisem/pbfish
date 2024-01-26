@@ -60,39 +60,39 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 
 	// including an option to modify field numbers on the go
 	// by all accounts, this should never be used unless you are doing something extraordinarily weird (why?)
-	_lockFieldNumber(): void{
+	lockFieldNumber(): void{
 		this._fieldNumberIsLocked = true;
 	}
-	_unlockFieldNumber(): void{
+	unlockFieldNumber(): void{
 		this._fieldNumberIsLocked = false;
 	}
-	set _fieldNumber(newFieldNumber: number){
+	set fieldNumber(newFieldNumber: number){
 		if(this._fieldNumberIsLocked) throw new Error(`You cannot modify a field number once it has been added to a message in ${this._name}`);
 		if(!Number.isInteger(newFieldNumber)) throw new Error(`Invalid field number ${newFieldNumber} in ${this._name}`);
 		if(newFieldNumber < 1) throw new Error(`Invalid field number ${newFieldNumber} in ${this._name}`);
 		this._options.fieldNumber = newFieldNumber;
 	}
-	get _fieldNumber(): number{
+	get fieldNumber(): number{
 		if(!this._options.fieldNumber) throw new Error(`Unspecified field number in ${this._name}`);
 		return this._options.fieldNumber;
 	}
 
-	get _fieldType(): string{
+	get fieldType(): string{
 		return this._options.fieldType;
 	}
 
 	// an option to change delimiter on the fly
 	// once again, not the most useful, but could be nice in rare situations
-	set _delimiter(newDelimiter: string | undefined){
+	set delimiter(newDelimiter: string | undefined){
 		if(newDelimiter === undefined) this._options.delimiter = defaultDelimiter;
 		else this._options.delimiter = newDelimiter;
 	}
-	get _delimiter(): string{
+	get delimiter(): string{
 		return this._options.delimiter;
 	}
 
 	// not protected since parent classes may need it, but should not be publicly needed
-	get _isUndefined(): boolean{
+	get isUndefined(): boolean{
 		return this._value === undefined;
 	}
 
@@ -107,13 +107,13 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 			// this should never occur, unless things were constructed in an unfathomably weird manner
 			if(this._options.fieldNumber && this._options.fieldNumber !== fieldNumber) throw new Error(`Field numbers don't match in ${this._name}`);
 			// this should also not happen, since almost all parsing should come from inside a message
-			else if(!this._options.fieldNumber) this._fieldNumber = fieldNumber;
+			else if(!this._options.fieldNumber) this._options.fieldNumber = fieldNumber;
 			if(this._options.fieldType !== matches[2]) throw new Error(`Field types don't match in ${this._name}`);
 			return matches[3]
 		}
 		return value;
 	}
-	abstract _validateValue(value?: T | T[]): void;
+	abstract validateValue(value?: T | T[]): void;
 	abstract toUrl(): string | URLEncodedValue;
 	abstract fromUrl(value?: string): void;
 	abstract toArray(): V | V[] | undefined;
@@ -127,18 +127,18 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	}
 
 	set value(value: T | T[] | undefined){
-		this._validateValue(value);
+		this.validateValue(value);
 		// T is never valid when an array simple pbf fields, so checking whether it is or isn't an array is more than enough for conversion
 		if(this._options.repeated && !Array.isArray(value)) this._value = [value];
 		else this._value = value;
 	}
 
-	get value(): T | T[]{
+	get value(): T | T[] | undefined{
 		return this._value;
 	}
 
 	// checks whether a value is valid. overwrite for derived classes
-	_validateValue(value?: T | T[]): void{
+	validateValue(value?: T | T[]): void{
 		// T is never an array type for simple pbf fields, so this check should eliminate a lot of the problems
 		if(!this._options.repeated && Array.isArray(value)) throw new Error(`Non-repeated fields cannot have an array value in ${this._name}`);
 		const realValue = value ?? this._value;
@@ -161,7 +161,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	toUrl(): string{
 		if(this._options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
-		this._validateValue();
+		this.validateValue();
 		if(!this._options.fieldType) throw new Error(`Please specify a field type before url encoding in ${this._name}`);
 		// for urlencoding, empty values can just be left out. DO NOT remove, or else _encodeValue will have problems with undefined
 		if(this._value === undefined) return "";
@@ -175,7 +175,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		if(this._options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
 		if(!value) this._value = undefined;
 		let newValue = this._decodeValue(this._parseUrlCore(value));
-		this._validateValue(newValue);
+		this.validateValue(newValue);
 		this._value = newValue;
 	}
 
@@ -184,7 +184,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	toArray(): T | T[] | undefined{
 		// just prepares the value to be encoded with JSON.stringify
 		// does not actually do any encoding itself
-		this._validateValue();
+		this.validateValue();
 		if(this._value === undefined) return undefined;
 		return this._value;
 	}
@@ -201,20 +201,20 @@ export class NumericPBFField extends SimplePBFField<number>{
 		super(options);
 	}
 
-	_decodeValue(value?: string): number | undefined{
+	protected _decodeValue(value?: string): number | undefined{
 		return (value === "" || value === undefined) ? undefined : Number(value);
 	}
 
 	protected _validateValueCore(value: number | number[] | undefined, additionalValidations: (value?: number) => void){
 		const realValue = value ?? this._value;
-		super._validateValue(realValue);
+		super.validateValue(realValue);
 		if(realValue === undefined) return;
 		// super already checks whether the array is a valid value
 		if(Array.isArray(realValue)) realValue.forEach(item => additionalValidations(item));
 		else additionalValidations(realValue);
 	}
 
-	_validateValue(value?: number | number[]): void{
+	validateValue(value?: number | number[]): void{
 		this._validateValueCore(value, (v: number) => null);
 	}
 }

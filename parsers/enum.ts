@@ -84,7 +84,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		return found.code;
 	}
 
-	_validateValue(value?: number){
+	validateValue(value?: number){
 		const realValue = value ?? this._value;
 		if(this._options.required && realValue === undefined) throw new Error(`A required field cannot have an undefined value in ${this._name}`);
 		this.lookupCode(value);
@@ -98,7 +98,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 
 	toUrl(): string{
 		if(this._options.repeated) throw new Error(`Repeated values cannot be urlencoded in ${this._name}`);
-		this._validateValue();
+		this.validateValue();
 		if(this._value === undefined) return "";
 		if(!this._options.fieldNumber){
 			return this._encodeValue();
@@ -113,12 +113,12 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 			return;
 		}
 		let newValue = Number(this._parseUrlCore(value));
-		this._validateValue(newValue);
+		this.validateValue(newValue);
 		this._value = newValue;
 	}
 
 	toArray(): number | number[] | undefined{
-		this._validateValue();
+		this.validateValue();
 		if(this._value === undefined) return undefined;
 		return this._value;
 	}

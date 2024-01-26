@@ -8,7 +8,7 @@ export default class Fixed64PBFField extends NumericPBFField{
 		super(extendOptions("y", options));
 	}
 
-	_validateValue(value?: number | number[]){
+	validateValue(value?: number | number[]){
 		this._validateValueCore(value, (v: number) => {
 			if(!Number.isInteger(v)) throw new Error(`Invalid value for fixed64: ${v} in ${this._name}`);
 			if(v < 0) throw new Error(`Invalid value for fixed64: ${v} in ${this._name}`);

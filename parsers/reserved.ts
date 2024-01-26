@@ -16,7 +16,7 @@ export default class ReservedPBFField extends GenericPBFField<undefined>{
 		return undefined;
 	}
 
-	_validateValue(value: undefined){
+	validateValue(value: undefined){
 		return;
 	}
 
