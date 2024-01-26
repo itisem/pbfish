@@ -7,7 +7,7 @@ export default class BoolPBFField extends SimplePBFField<boolean>{
 	}
 
 	_decodeValue(value?: string): boolean | undefined{
-		if(value === "" || value === undefined) return undefined;
+		if(value === "" || value === undefined || value === null) return undefined;
 		return value === "true";
 	}
 }
