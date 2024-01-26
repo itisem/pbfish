@@ -1,6 +1,6 @@
 {
 	"name": "@gmaps-tools/pbfish",
-	"version": "0.999.1",
+	"version": "1.0.0",
 	"description": "A parser for Google Maps' protobuf-like formats",
 	"author": "Emily Nagy",
 	"license": "MIT",
