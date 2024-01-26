@@ -99,4 +99,48 @@ describe("numeric fields", () => {
 		expect(repeatedTester.value).toEqual([10, 11]);
 		expect(() => repeatedTester.fromUrl("!9d12")).toThrow();
 	});
+	test("invalid values are rejected", () => {
+		// blatantly invalid values
+		expect(() => new Fixed32PBFField().fromArray(0.5)).toThrow();
+		expect(() => new Fixed32PBFField().fromArray(-1)).toThrow();
+		expect(() => new Fixed32PBFField().fromArray(5000000000)).toThrow();
+		expect(() => new Fixed64PBFField().fromArray(0.5)).toThrow();
+		expect(() => new Fixed64PBFField().fromArray(-1)).toThrow();
+		expect(() => new Int32PBFField().fromArray(0.5)).toThrow();
+		expect(() => new Int32PBFField().fromArray(3000000000)).toThrow();
+		expect(() => new Int32PBFField().fromArray(-3000000000)).toThrow();
+		expect(() => new Int64PBFField().fromArray(0.5)).toThrow();
+		expect(() => new SInt32PBFField().fromArray(0.5)).toThrow();
+		expect(() => new SInt32PBFField().fromArray(3000000000)).toThrow();
+		expect(() => new SInt32PBFField().fromArray(-3000000000)).toThrow();
+		expect(() => new SInt64PBFField().fromArray(0.5)).toThrow();
+		expect(() => new SFixed32PBFField().fromArray(0.5)).toThrow();
+		expect(() => new SFixed32PBFField().fromArray(3000000000)).toThrow();
+		expect(() => new SFixed32PBFField().fromArray(-3000000000)).toThrow();
+		expect(() => new SFixed64PBFField().fromArray(0.5)).toThrow();
+		expect(() => new UInt32PBFField().fromArray(0.5)).toThrow();
+		expect(() => new UInt32PBFField().fromArray(-1)).toThrow();
+		expect(() => new UInt32PBFField().fromArray(5000000000)).toThrow();
+		expect(() => new UInt64PBFField().fromArray(0.5)).toThrow();
+		expect(() => new UInt64PBFField().fromArray(-1)).toThrow();
+
+		// values that are valid but may cause problems bc everything is a double in js
+		const unsafeInt = Number.MAX_SAFE_INTEGER + 1000000;
+		const mockWarn = jest.spyOn(global.console, "warn").mockImplementation();
+		new Fixed64PBFField().fromArray(unsafeInt);
+		expect(mockWarn).toHaveBeenCalled();
+		jest.clearAllMocks();
+		new Int64PBFField().fromArray(unsafeInt);
+		expect(mockWarn).toHaveBeenCalled();
+		jest.clearAllMocks();
+		new SInt64PBFField().fromArray(unsafeInt);
+		expect(mockWarn).toHaveBeenCalled();
+		jest.clearAllMocks();
+		new SFixed64PBFField().fromArray(unsafeInt);
+		expect(mockWarn).toHaveBeenCalled();
+		jest.clearAllMocks();
+		new UInt64PBFField().fromArray(unsafeInt);
+		expect(mockWarn).toHaveBeenCalled();
+		jest.restoreAllMocks();
+	})
 });
