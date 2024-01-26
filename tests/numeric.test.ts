@@ -100,6 +100,8 @@ describe("numeric fields", () => {
 		expect(() => repeatedTester.fromUrl("!9d12")).toThrow();
 	});
 	test("invalid values are rejected", () => {
+		expect(() => new Int32PBFField().fromUrl("A")).toThrow();
+
 		// blatantly invalid values
 		expect(() => new Fixed32PBFField().fromArray(0.5)).toThrow();
 		expect(() => new Fixed32PBFField().fromArray(-1)).toThrow();
@@ -142,5 +144,15 @@ describe("numeric fields", () => {
 		new UInt64PBFField().fromArray(unsafeInt);
 		expect(mockWarn).toHaveBeenCalled();
 		jest.restoreAllMocks();
-	})
+	});
+
+	test("helper functions", () => {
+		expect(new UInt64PBFField()["_decodeValue"]()).toBeUndefined();
+		expect(new UInt64PBFField()["_decodeValue"]("")).toBeUndefined();
+		expect(new UInt64PBFField()["_decodeValue"]("10")).toBe(10);
+		expect(() => new UInt64PBFField({repeated: true})["_validateValueCore"](
+			[10, 15, NaN, 20],
+			(v: number) => null
+		)).toThrow();
+	});
 });
