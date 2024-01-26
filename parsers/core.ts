@@ -209,9 +209,15 @@ export class NumericPBFField extends SimplePBFField<number>{
 	}
 
 	protected _validateValueCore(value: number | number[] | undefined, additionalValidations: (value?: number) => void){
-		const realValue = value ?? this._value;
+		const realValue: number | number[] = value ?? this._value;
 		super.validateValue(realValue);
 		if(realValue === undefined) return;
+		if(!Array.isArray(realValue)){
+			if(isNaN(realValue as number)) throw new Error(`NaN value in ${this._name}`);
+		}
+		else{
+			if(realValue.some(x => isNaN(x))) throw new Error(`NaN value in ${this._name}`);
+		}
 		// super already checks whether the array is a valid value
 		if(Array.isArray(realValue)) realValue.forEach(item => additionalValidations(item));
 		else additionalValidations(realValue);
