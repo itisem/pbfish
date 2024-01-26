@@ -103,7 +103,6 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	constructor(options: PBFFieldOptions, description: MessagePBFFieldDescriptor){
 		super(extendOptions("m", options));
 		this._value = {};
-		this.options = options ?? {};
 
 		// set indices for easier access
 		this._indices = [];
@@ -181,7 +180,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
 		if(value === undefined) this._checkValidity();
-		if(this.options.required && this.isUndefined) throw new Error(`Required field cannot be undefined in ${this._name}`);
+		if(this._options.required && this.isUndefined) throw new Error(`Required field cannot be undefined in ${this._name}`);
 		const realValue = value ?? this._value;
 		let fieldNumbers = [];
 		for(let k in realValue){
@@ -454,7 +453,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	set delimiter(newDelimiter: string | undefined){
 		const realNewDelimiter = newDelimiter ?? defaultDelimiter;
-		this.options.delimiter = realNewDelimiter;
+		this._options.delimiter = realNewDelimiter;
 		for(let [k, v] of Object.entries(this._value)){
 			if(!Array.isArray(v)){
 				v.delimiter = realNewDelimiter;
@@ -497,7 +496,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			valuesThatExist.length
 		);
 		// if this is the main thing, no need for field counts, otherwise, add it to the string
-		const fieldCountString = this.options.fieldNumber ? fieldCount.toString() : "";
+		const fieldCountString = this._options.fieldNumber ? fieldCount.toString() : "";
 		// finalise everything, handle URLEncodedValue types
 		const finalValue = fieldCountString + encoded.map(x => typeof x === "string" ? x : x.value).join("");
 		// if any field is repeated, this will just throw an error by itself. no need to add the delimiter since it will append that here itself
@@ -512,10 +511,10 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		const encodedValue = this._encodeValue();
 		if(encodedValue.value === "") return "";
 		// if this doesn't have a field number, then the encoded value is the url format in itself
-		if(!this.options.fieldNumber) return encodedValue.value;
+		if(!this._options.fieldNumber) return encodedValue.value;
 		// otherwise, append the delimiter and return information about the field count
 		return {
-			value: this._options.delimiter + this.options.fieldNumber.toString() + "m" + encodedValue.value,
+			value: this._options.delimiter + this._options.fieldNumber.toString() + "m" + encodedValue.value,
 			fieldCount: encodedValue.fieldCount
 		};
 	}
