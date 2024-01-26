@@ -144,15 +144,17 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		const realValue = value ?? this._value;
 		// T is an array type iff it is a repeated field, so this check should eliminate a lot of the problems
 		if(!!this._options.repeated !== Array.isArray(realValue)) throw new Error(`Only repeated fields can/must have an array value in ${this._name}`);
-		if(this._options?.required && realValue === undefined) throw new Error(`A required field cannot have an undefined value in ${this._name}`);
+		if(this._options.required && realValue === undefined) throw new Error(`A required field cannot have an undefined value in ${this._name}`);
 	}
 
 	// encoders and decoders for URL-encoded stuff. only really just strings
 	// overwriting this method is enough, rather than overwriting the encoder itself
 	// url decoding is done in the message object itself
 	protected _encodeValue(value?: T | T[]): string{
-		// no need to handle it in _encodeValue since toUrl already handles it
 		const realValue = value ?? this._value;
+		if(Array.isArray(realValue)) return JSON.stringify(realValue);
+		if(realValue === undefined) return "null";
+		// no need to handle it in _encodeValue since toUrl already handles it
 		return realValue.toString();
 	}
 
@@ -174,7 +176,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	fromUrl(value?: string){
 		if(this._options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
-		if(!value) this._value = undefined;
+		if(value === undefined || value === "") this._value = undefined;
 		let newValue = this._decodeValue(this._parseUrlCore(value));
 		this.validateValue(newValue);
 		this._value = newValue;

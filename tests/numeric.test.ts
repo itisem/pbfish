@@ -153,5 +153,7 @@ describe("numeric fields", () => {
 			[10, 15, NaN, 20],
 			(v: number) => null
 		)).toThrow();
+		expect(new UInt64PBFField()["_encodeValue"]()).toEqual("null");
+		expect(new UInt64PBFField({repeated: true})["_encodeValue"]([1,2,3])).toEqual("[1,2,3]");
 	});
 });

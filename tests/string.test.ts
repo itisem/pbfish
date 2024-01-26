@@ -63,6 +63,8 @@ describe("string pbf fields", () => {
 		expect(tester.value).toEqual("TajikistA*n");
 		tester.fromUrl("!3sNICE");
 		expect(tester.value).toEqual("NICE");
+		tester.fromUrl("");
+		expect(tester.isUndefined).toEqual(true);
 		expect(() => tester.fromUrl("!4sBad")).toThrow();
 		expect(() => tester.fromUrl("!3zuhoh")).toThrow();
 		const tester2 = new Base64StringPBFField({fieldNumber: 3});
@@ -78,6 +80,9 @@ describe("string pbf fields", () => {
 	test("helper functions that have not been tested yet", () => {
 		const tester = new StringPBFField({fieldNumber: 3});
 		expect(tester["_encodeValue"]()).toBeUndefined();
+		expect(tester["_encodeValue"]("a")).toEqual("a");
 		expect(tester["_decodeValue"]()).toBeUndefined();
+		expect(() => new StringPBFField({required: true}).validateValue()).toThrow();
+		expect(() => new StringPBFField({required: true}).validateValue("a")).not.toThrow();
 	})
 });
