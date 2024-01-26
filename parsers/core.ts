@@ -91,7 +91,7 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		}
 	}
 	get delimiter(): string{
-		return this._options.delimiter ?? defaultDelimiter;
+		return this._options.delimiter;
 	}
 
 	// not protected since parent classes may need it, but should not be publicly needed
