@@ -32,6 +32,8 @@ describe("string pbf fields", () => {
 		expect(tester.toUrl()).toEqual("");
 		tester.value = "hello world";
 		expect(tester.toUrl()).toEqual("!3shello%20world");
+		expect(tester["_encodeValue"]()).toEqual("hello%20world");
+		expect(tester["_encodeValue"]("ok world")).toEqual("ok%20world");
 		tester.value = "hello!*world";
 		expect(tester.toUrl()).toEqual("!3shello*21*2Aworld");
 		const tester2 = new StringPBFField({fieldNumber: 3, delimiter: "&"});
