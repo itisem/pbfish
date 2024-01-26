@@ -142,9 +142,9 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	// checks whether a value is valid. overwrite for derived classes
 	validateValue(value?: T | T[]): void{
-		// T is never an array type for simple pbf fields, so this check should eliminate a lot of the problems
-		if(!this._options.repeated && Array.isArray(value)) throw new Error(`Non-repeated fields cannot have an array value in ${this._name}`);
 		const realValue = value ?? this._value;
+		// T is an array type iff it is a repeated field, so this check should eliminate a lot of the problems
+		if(!!this._options.repeated !== Array.isArray(realValue)) throw new Error(`Only repeated fields can/must have an array value in ${this._name}`);
 		if(this._options?.required && realValue === undefined) throw new Error(`A required field cannot have an undefined value in ${this._name}`);
 	}
 
