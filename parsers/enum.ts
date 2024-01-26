@@ -24,7 +24,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 			case "string":
 				return this.lookupValue(value);
 			default:
-				throw new Error(`Invalid type for value in ${this._name}`);
+				throw new Error(`Invalid type for value in ${this._name} -- this should never happen!!`);
 		}
 	}
 
@@ -55,9 +55,12 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		}
 	}
 
-	get value(): string | string[]{
+	get value(): string | string[] | undefined{
 		// _value should always be an array if repeated, and not an array if not repeated
 		if(this._options.repeated){
+			// undefined is fine
+			if(this._value === undefined) return undefined;
+			// otherwise, non-array is erroneous
 			if(!Array.isArray(this._value)) throw new Error(`Something extremely unusual happened, and the value got corrupted in ${this._name}`);
 			else return this._value.map(x => this.lookupCode(x));
 		}
@@ -105,7 +108,10 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 
 	fromUrl(value?: string){
 		if(this._options.repeated || Array.isArray(this._value)) throw new Error(`Repeated values cannot be urlencoded in ${this._name}`);
-		if(!value) this._value = undefined;
+		if(!value){
+			this._value = undefined;
+			return;
+		}
 		let newValue = Number(this._parseUrlCore(value));
 		this._validateValue(newValue);
 		this._value = newValue;
