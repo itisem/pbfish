@@ -1,5 +1,5 @@
 export interface GenericPBFFieldOptions extends DelimiterRequiredPBFFieldsOptions{
-	fieldType?: string;
+	fieldType: string;
 };
 
 export interface PBFFieldOptions extends BasePBFFieldOptions{
@@ -132,8 +132,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	set value(value: T | T[] | undefined){
 		this.validateValue(value);
 		// T is never valid when an array simple pbf fields, so checking whether it is or isn't an array is more than enough for conversion
-		if(this._options.repeated && !Array.isArray(value)) this._value = [value];
-		else this._value = value;
+		this._value = value;
 	}
 
 	get value(): T | T[] | undefined{
@@ -165,7 +164,6 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	toUrl(): string{
 		if(this._options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
 		this.validateValue();
-		if(!this._options.fieldType) throw new Error(`Please specify a field type before url encoding in ${this._name}`);
 		// for urlencoding, empty values can just be left out. DO NOT remove, or else _encodeValue will have problems with undefined
 		if(this._value === undefined) return "";
 		if(!this._options.fieldNumber){
