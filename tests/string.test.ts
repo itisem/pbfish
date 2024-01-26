@@ -9,8 +9,7 @@ describe("string pbf fields", () => {
 		expect(tester.value).toEqual("hello world");
 		const repeatedTester = new StringPBFField({repeated: true});
 		expect(repeatedTester.value).toBeUndefined();
-		repeatedTester.value = "hello world";
-		expect(repeatedTester.value).toEqual(["hello world"]);
+		expect(() => repeatedTester.value = "hello world").toThrow();
 		repeatedTester.value = ["hello", "world"];
 		expect(repeatedTester.value).toEqual(["hello", "world"]);
 	});
@@ -24,7 +23,7 @@ describe("string pbf fields", () => {
 		tester2.value = "hello world";
 		expect(tester2.toArray()).toEqual("hello world");
 		const repeatedTester = new Base64StringPBFField({repeated: true});
-		repeatedTester.value = "hello world";
+		repeatedTester.value = ["hello world"];
 		expect(repeatedTester.toArray()).toEqual(["hello world"]);
 	});
 	test("value can be toUrld", () => {
@@ -43,7 +42,7 @@ describe("string pbf fields", () => {
 		tester3.value = "hello world";
 		expect(tester3.toUrl()).toEqual("!3zaGVsbG8gd29ybGQ")
 		const repeatedTester = new StringPBFField({repeated: true});
-		repeatedTester.value = "hello world";
+		repeatedTester.value = ["hello world"];
 		expect(() => repeatedTester.toUrl()).toThrow();
 	});
 	test("urlencoding returns the value when field number is unset", () => {
@@ -70,7 +69,7 @@ describe("string pbf fields", () => {
 		tester2.fromUrl("!3zaGVsbG8gd29ybGQ");
 		expect(tester2.value).toEqual("hello world")
 		const repeatedTester = new StringPBFField({repeated: true, fieldNumber: 3});
-		repeatedTester.fromArray("hello world");
+		repeatedTester.fromArray(["hello world"]);
 		expect(repeatedTester.value).toEqual(["hello world"]);
 		repeatedTester.fromArray(["hello", "world"])
 		expect(repeatedTester.value).toEqual(["hello", "world"]);

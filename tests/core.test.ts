@@ -24,4 +24,11 @@ describe("core functionality", () => {
 		parser.delimiter = "";
 		expect(parser.delimiter).toEqual("!");
 	});
+	test("validation", () => {
+		expect(() => new StringPBFField({repeated: true}).validateValue("a")).toThrow();
+		expect(() => new StringPBFField({repeated: false}).validateValue(["a"])).toThrow();
+		expect(() => new StringPBFField({required: true}).validateValue(undefined)).toThrow();
+		expect(() => new StringPBFField({required: true}).validateValue("")).not.toThrow();
+
+	});
 });
