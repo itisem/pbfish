@@ -419,7 +419,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		// reset all values if undefined
 		if(value === undefined){
 			for(let [k,v] of Object.entries(this._value)){
-				this._value[k] = undefined;
+				delete this._value[k];
 				// change property value
 				this._setProperty(k);
 			}
@@ -460,10 +460,16 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		);
 	}
 
+	get delimiter(): string{
+		return this._options.delimiter;
+	}
+
 	set delimiter(newDelimiter: string | undefined){
 		const realNewDelimiter = newDelimiter ?? defaultDelimiter;
+		if(realNewDelimiter.length !== 1) throw new Error(`Invalid delimiter ${realNewDelimiter} in ${this._name}`);
 		this._options.delimiter = realNewDelimiter;
 		for(let [k, v] of Object.entries(this._value)){
+			if(v === undefined) continue;
 			if(!Array.isArray(v)){
 				v.delimiter = realNewDelimiter;
 			}

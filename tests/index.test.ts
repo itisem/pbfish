@@ -70,8 +70,8 @@ const badDefinition = {
 	}
 }
 
-describe("loading simple definitions", () => {
-	it("loads correct definitions", () => {
+describe("small definitions", () => {
+	test("loads correct definitions", () => {
 		const parser = new pbfish(goodDefinition);
 		const location = parser.create("Location");
 		location.value = {lat: 1, lng: 2, info: {address: {country: "nl", building: "RESIDENTIAL"}}};
@@ -81,20 +81,22 @@ describe("loading simple definitions", () => {
 		expect(location.toUrl()).toEqual("!1d1!2d2!3m3!1m2!1snl!3e1");
 		expect(location2.toUrl()).toEqual("!1d3!2d4!3m3!1m2!1sde!3e2");
 	});
-	it("loads correct definitions even if they are strings", () => {
+	test("loads correct definitions even if they are strings", () => {
 		const parser = new pbfish(JSON.stringify(goodDefinition));
 		const location = parser.create("Location");
 		location.value = {lat: 1, lng: 2, info: {address: {country: "nl"}}};
 		expect(location.toUrl()).toEqual("!1d1!2d2!3m2!1m1!1snl");
 	})
-	it("fails to load incorrect definitions", () => {
+	test("fails to load incorrect definitions", () => {
 		const parser = new pbfish(badDefinition);
 		const location = parser.create("Location");
 		expect(() => {location.value = {lat: 3}}).toThrow();
+		const parser2 = new pbfish(goodDefinition);
+		expect(() => parser.create("FoobarFakeFieldName1234")).toThrow();
 	});
 })
 
-describe("can load large definitions", () => {
+describe("large definitions", () => {
 	test("loading large definitions doesn't brick the code", () => {
 		const startTime = Date.now();
 		const parser = new pbfish(SingleImageSearch);
@@ -144,6 +146,7 @@ describe("can load large definitions", () => {
 			[undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[[[2,true,2]]]],
 			[[2,6]]
 		]);
+		expect(request.toJSON()).toEqual('[["apiv3"],[[null,null,53.210243,6.564092],500],[null,null,null,null,null,null,null,null,null,null,[[[2,true,2]]]],[[2,6]]]');
 		expect(() => request.toUrl()).toThrow();
 	});
 	test("loading stuff works", () => {
@@ -188,41 +191,62 @@ describe("can load large definitions", () => {
 		const request2 = parser.create("SingleImageSearchRequest");
 		request2.fromUrl("!1m1!1sapiv3!2m4!1m2!3d1!4d2!2d500");
 		expect(request2.value).toMatchObject({context: {productId: "apiv3"}});
+		const request3 = parser.create("SingleImageSearchRequest");
+		request3.fromJSON('[["apiv3"],[[null,null,53.210243,6.564092],500],[null,null,null,null,null,null,null,null,null,null,[[[2,true,2]]]],[[2,6]]]');
+		expect(request3.location.center.lng).toEqual(6.564092);
+		request3.value = undefined;
+		expect(request3.isUndefined).toBe(true);
 	});
 });
 
-describe("oneof constraint violations are not accepted", () => {
-	const parser = new pbfish(SingleImageSearch);
-	const request1 = parser.create("SingleImageSearchRequest");
-	expect(() => request1.value = {
-		location: {
-			lat: 1,
-			lng: 2
-		},
-		feature: {
-			tag: "hello"
-		}
-	}).toThrow();
-	const request2 = parser.create("SingleImageSearchRequest");
-	expect(() => request2.fromArray([
-		["apiv3"],
-		[[undefined,undefined,53.210243,6.564092],500],
-		[undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[[[2,true,2]]]],
-		[[2,6]],
-		undefined,
-		undefined,
-		undefined,
-		[undefined,undefined,"hello"]
-	])).toThrow();
-	const request3 = parser.create("SingleImageSearchRequest");
-	expect(() => request3.fromUrl("!1m1!1sapiv3!2m2!3d53.210243!4d6.564092!8m2!3shello")).toThrow();
-});
+describe("miscellaneous", () => {
+	test("oneof", () => {
+		const parser = new pbfish(SingleImageSearch);
+		const request1 = parser.create("SingleImageSearchRequest");
+		expect(() => request1.value = {
+			location: {
+				lat: 1,
+				lng: 2
+			},
+			feature: {
+				tag: "hello"
+			}
+		}).toThrow();
+		const request2 = parser.create("SingleImageSearchRequest");
+		expect(() => request2.fromArray([
+			["apiv3"],
+			[[undefined,undefined,53.210243,6.564092],500],
+			[undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[[[2,true,2]]]],
+			[[2,6]],
+			undefined,
+			undefined,
+			undefined,
+			[undefined,undefined,"hello"]
+		])).toThrow();
+		const request3 = parser.create("SingleImageSearchRequest");
+		expect(() => request3.fromUrl("!1m1!1sapiv3!2m2!3d53.210243!4d6.564092!8m2!3shello")).toThrow();
+	});
 
-describe("required works", () => {
-	const parser = new pbfish(SingleImageSearch);
-	const request = parser.create("SingleImageSearchRequest");
-	request.value = {location: {center: {lat: 1, lng: 2}}};
-	expect(() => request.toArray()).toThrow();
-	expect(() => request.toUrl()).toThrow();
-	expect(() => request.value).toThrow();
+	test("required", () => {
+		const parser = new pbfish(SingleImageSearch);
+		const request = parser.create("SingleImageSearchRequest");
+		request.value = {location: {center: {lat: 1, lng: 2}}};
+		expect(() => request.toArray()).toThrow();
+		expect(() => request.toUrl()).toThrow();
+		expect(() => request.value).toThrow();
+	});
+
+	test("delimiters", () => {
+		const parser = new pbfish(SingleImageSearch);
+		const request = parser.create("SingleImageSearchRequest");
+		request.fromArray([
+			["apiv3"],
+			[[undefined,undefined,53.210243,6.564092],500],
+			[undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[[[2,true,2]]]],
+			[[2,6]]
+		]);
+		request.delimiter = "A";
+		expect(request.delimiter).toEqual("A");
+		expect(request.location.center.delimiter).toEqual("A");
+	})
 });
