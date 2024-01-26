@@ -99,6 +99,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 	// check for required fields
 	protected _requiredFields: string[];
+	// forbidden names for quick access
+	protected _forbiddenNames: string[];
 
 	constructor(options: PBFFieldOptions, description: MessagePBFFieldDescriptor){
 		super(extendOptions("m", options));
@@ -143,6 +145,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				oneofIndex += 1;
 			}
 		}
+
+		// generate forbidden names that would be dangerous to overwrite
+		this._forbiddenNames = Object.keys(this);
 	}
 
 	// check if all oneofs are met
@@ -398,9 +403,12 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	}
 
 	protected _setProperty(key){
-		const setKey = typeof this[key] === "function" || key === "value" ? "__" + key : key;
+		// no quick accessor for forbidden names that would be dangerous to overwrite
+		const setKey = this._forbiddenNames.includes(key) ? "__" + key : key;
 		let assign: {[k: string]: MessagePBFFieldProperty | MessagePBFFieldProperty[]} = {};
 		const value = this._value[key];
+		// for undefined, just reset value
+		if(value === undefined) return Object.assign(this, {key: undefined});
 		// array values in _value only exist for message fields, so we just pass along the references
 		if(Array.isArray(value)) assign[setKey] = this._value[key];
 		else this._checkIfMessageField(value.value) ? assign[key] = this._value[setKey] : assign[key] = this._value[setKey].value;
@@ -411,10 +419,11 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		// reset all values if undefined
 		if(value === undefined){
 			for(let [k,v] of Object.entries(this._value)){
-				this._value[k].value = undefined;
+				this._value[k] = undefined;
 				// change property value
 				this._setProperty(k);
 			}
+			return;
 		}
 		// otherwise, set values, or add new fields depending on what we have
 		for(let [k, v] of Object.entries(value)){
@@ -468,6 +477,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	get isUndefined(){
 		for(let [k, v] of Object.entries(this._value)){
+			if(v === undefined) continue;
 			if(Array.isArray(v)){
 				for(let val of v){
 					if(!val.isUndefined) return false;
