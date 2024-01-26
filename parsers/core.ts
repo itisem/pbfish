@@ -43,7 +43,7 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	protected _options: GenericPBFFieldOptions;
 	protected _name: string;
 	constructor(options: GenericPBFFieldOptions){
-		if(options.fieldNumber){
+		if(options.fieldNumber !== undefined){
 			if(!Number.isInteger(options.fieldNumber)) throw new Error(`Invalid field number ${options.fieldNumber} in ${options.name}`);
 			if(options.fieldNumber < 1) throw new Error(`Invalid field number ${options.fieldNumber} in ${options.name}`);
 		}
@@ -84,11 +84,14 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	// an option to change delimiter on the fly
 	// once again, not the most useful, but could be nice in rare situations
 	set delimiter(newDelimiter: string | undefined){
-		if(newDelimiter === undefined) this._options.delimiter = defaultDelimiter;
-		else this._options.delimiter = newDelimiter;
+		if(!newDelimiter) this._options.delimiter = defaultDelimiter;
+		else{
+			if(newDelimiter.length === 1) this._options.delimiter = newDelimiter;
+			else throw new Error(`Invalid delimiter ${newDelimiter} in ${this._name}`)
+		}
 	}
 	get delimiter(): string{
-		return this._options.delimiter;
+		return this._options.delimiter ?? defaultDelimiter;
 	}
 
 	// not protected since parent classes may need it, but should not be publicly needed
