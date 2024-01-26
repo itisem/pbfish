@@ -5,6 +5,7 @@ export default class ReservedPBFField extends GenericPBFField<undefined>{
 		super(extendOptions("-", options));
 		// doesn't matter, everything is nothing
 		if(options?.repeated) throw new Error(`Reserved fields cannot be repeated in ${this._name}`);
+		if(options?.required) throw new Error(`Reserved fields cannot be required in ${this._name}`);
 		this._value = undefined;
 	}
 

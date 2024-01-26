@@ -13,22 +13,22 @@ This tool was built around JSON representations of protobuf definitions. In case
 
 Once you have a JSON definition, you can do something like this:
 
-```js
+```ts
 import pbfish from "@gmaps-tools/pbfish";
-const parser = new pbfish(yourJSONDefinition);
+const parser = new pbfish(yourDefinition);
 const currentLocation = parser.create("Location"); // loads the protobuf definition called Location from your json
 ```
 
 You can then use the following methods to parse and manipulate data:
-```js
+```ts
 currentLocation.value = {lat: 53.210, lng: 6.564, notes: {country: "nl", subdivision: "groningen"}} // loads in a value to the the parser
 // note setting .value again, i.e. doing something along the lines of currentLocation.value = {lat: 1, lng: 2} will only overwrite the changed values, and not unset any previously set value
 currentLocation.toUrl(); // exports a value as a url-encoded protobuf format, i.e. "!1d53.210!2d6.564!3m2!1snl!2sgroningen"
 currentLocation.toJSON(); // exports value as a json-encoded protobuf format, i.e. '[53.210,6.564,null,["nl", "groningen"]]'
 currentLocation.toArray(); // exports value as a json-encoded protobuf format (decoded into an array), i.e. [53.210,6.564,undefined,["nl", "groningen"]]
 currentLocation.fromUrl("!1d53.21034178655471!2d6.564304111160638!3m2!1snl!2sgroningen"); // loads a value from a url-encoded format
-currentLocation.fromJSON('[53.21034178655471,6.56430411111160638,null,["nl", "groningen"]]'); // loads a value from a json-encoded protobuf format (decoded into an array)
-currentLocation.fromArray([53.21034178655471,6.56430411111160638,undefined,["nl", "groningen"]]); // loads a value from a json-encoded protobuf format (unparsed)
+currentLocation.fromJSON('[53.21034178655471,6.56430411111160638,null,["nl", "groningen"]]'); // loads a value from a json-encoded protobuf format
+currentLocation.fromArray([53.21034178655471,6.56430411111160638,undefined,["nl", "groningen"]]); // loads a value from a json-encoded protobuf format (post-JSON.parse())
 ```
 
 For enums, you can use either their numerical value or literal text value, i.e. if you have an enum defined as
