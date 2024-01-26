@@ -29,6 +29,5 @@ describe("core functionality", () => {
 		expect(() => new StringPBFField({repeated: false}).validateValue(["a"])).toThrow();
 		expect(() => new StringPBFField({required: true}).validateValue(undefined)).toThrow();
 		expect(() => new StringPBFField({required: true}).validateValue("")).not.toThrow();
-
 	});
 });
