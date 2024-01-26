@@ -77,6 +77,10 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		return this._options.fieldNumber;
 	}
 
+	get _fieldType(): string{
+		return this._options.fieldType;
+	}
+
 	// an option to change delimiter on the fly
 	// once again, not the most useful, but could be nice in rare situations
 	set _delimiter(newDelimiter: string | undefined){

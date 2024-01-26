@@ -186,7 +186,7 @@ describe("can load large definitions", () => {
 			},
 		});
 		const request2 = parser.create("SingleImageSearchRequest");
-		request2.fromUrl("!1m1!1sapiv3!2m2!1m2!3d1!4d2!2d500");
+		request2.fromUrl("!1m1!1sapiv3!2m4!1m2!3d1!4d2!2d500");
 		expect(request2.value).toMatchObject({context: {productId: "apiv3"}});
 	});
 });
@@ -215,7 +215,7 @@ describe("oneof constraint violations are not accepted", () => {
 		[undefined,undefined,"hello"]
 	])).toThrow();
 	const request3 = parser.create("SingleImageSearchRequest");
-	expect(() => request3.fromUrl("!1m1!1sapiv3!2m2!3d53.210243!4d6.564092!8m1!3shello")).toThrow();
+	expect(() => request3.fromUrl("!1m1!1sapiv3!2m2!3d53.210243!4d6.564092!8m2!3shello")).toThrow();
 });
 
 describe("required works", () => {
@@ -225,4 +225,4 @@ describe("required works", () => {
 	expect(() => request.toArray()).toThrow();
 	expect(() => request.toUrl()).toThrow();
 	expect(() => request.value).toThrow();
-})
+});

@@ -44,16 +44,6 @@ export interface MessagePBFFieldValue{
 // every individual property's type
 export type MessagePBFFieldProperty = PBFField | MessagePBFFieldValue;
 
-// any layers of strings
-export type NestedStringArray = string | undefined | NestedStringArray[];
-
-// interface used temporarily while parsing values
-interface SimpleValue{
-	index: number;
-	letter: string;
-	value: string | SimpleValue[];
-};
-
 // the outer layer will always have nested, so exporting IndividualProtobufDefinition and nothing else would be incorrect
 export interface ProtobufDefinition{
 	nested: ManyProtobufDefinitions;
@@ -525,70 +515,73 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		if(!this.options.fieldNumber) return encodedValue.value;
 		// otherwise, append the delimiter and return information about the field count
 		return {
-			value: this.options.delimiter + this.options.fieldNumber.toString() + "m" + encodedValue.value,
+			value: this._options.delimiter + this.options.fieldNumber.toString() + "m" + encodedValue.value,
 			fieldCount: encodedValue.fieldCount
 		};
 	}
 
-	private _finaliseParsedValue(value: SimpleValue[]): NestedStringArray{
-		let finalValue: NestedStringArray = [];
-		for(let item of value){
-			if(Array.isArray(item.value)) finalValue[item.index - 1] = this._finaliseParsedValue(item.value);
-			else finalValue[item.index - 1] = `${this.options.delimiter}${item.index}${item.letter}${item.value}`;
-		}
-		return finalValue;
-	}
-
-	fromUrl(value?: NestedStringArray){
+	fromUrl(value?: string){
+		// empty value = no value change needed
 		if(value === undefined || value === "") return;
 		// the url needs to be broken into chunks
-		if(!Array.isArray(value)){
-			let arrayValue = value.split(this.options.delimiter);
-			let parsedValue: SimpleValue[] = [];
-			for(let individualValue of arrayValue.reverse()){
-				if(individualValue === "") continue;
-				const regex = /^([0-9]+)([a-zA-Z])(.*)$/;
-				const matches = individualValue.match(regex);
-				// invalid url part, just ignore
-				if(!matches) continue;
-				// take the followup items if it's a message
-				// otherwise, just add it to the list
-				// only account for m since repeated values are not urlencodeable (afaik)
-				if(matches[2] === "m"){
-					const includedItemCount = parseInt(matches[3], 10);
-					const includedItems = parsedValue.splice(-includedItemCount);
-					parsedValue.push({
-						index: parseInt(matches[1], 10),
-						letter: "m",
-						value: includedItems
-					});
-				}
-				else{
-					parsedValue.push({
-						index: parseInt(matches[1], 10),
-						letter: matches[2],
-						value: matches[3]
-					});
-				}
+		let arrayValue = value.split(this._options.delimiter).filter(x => !!x);
+		// finalised parsed values to add things to
+		let parsedValue: ({letter: string, value: string, index: number})[] = [];
+		// ignore values that have already been parsed inside a message
+		let ignoreCount = 0;
+		// simple for loop makes splicing easier than for of
+		for(let i = 0; i < arrayValue.length; i++){
+			const individualValue = arrayValue[i];
+			// this is inside a message, just ignore
+			if(ignoreCount > 0){
+				ignoreCount -= 1;
+				continue;
 			}
-			value = this._finaliseParsedValue(parsedValue);
+			// get parts of each value
+			const regex = /^([0-9]+)([a-zA-Z])(.*)$/;
+			const matches = individualValue.match(regex);
+			// invalid url part, just ignore
+			if(!matches) continue;
+			// messages need special care
+			if(matches[2] === "m"){
+				// the value of the message field is how many of the upcoming fields it contains
+				ignoreCount = parseInt(matches[3], 10);
+				if(isNaN(ignoreCount)) throw new Error(`Invalid url-encoded protobuf message ${value} in ${this._name}`);
+				// the message is incomplete
+				if(ignoreCount > arrayValue.length - i - 1) throw new Error(`Invalid url-encoded protobuf message ${value} in ${this._name}`);
+				// add the upcoming values to ignoreCount
+				parsedValue.push({
+					index: parseInt(matches[1], 10),
+					letter: matches[2],
+					value: arrayValue.slice(i + 1, i + 1 + ignoreCount).join(this._options.delimiter)
+				});
+			}
+			// if it's not a message, add parsed value properly
+			else{
+				parsedValue.push({
+					index: parseInt(matches[1], 10),
+					letter: matches[2],
+					value: matches[3]
+				});
+			}
 		}
-		// sorting out post parsing
-		for(let i = 0; i < value.length; i++){
-			if(value[i] === undefined) continue;
-			let key = this._indices[i];
-			// _value already has empty spaces for objects, so calling fromUrl on it works
-			if(key === undefined){
-				key = this._allIndices[i];
-				if(!key) throw new Error(`Invalid index ${i+1} of ${this._name}`);
+
+		for(let value of parsedValue){
+			const key = this._allIndices[value.index - 1]
+			// skip invalid indices
+			if(!key)
+				console.warn(`Invalid index ${value.index} in ${this._name} - skipping`);
+			else{
 				this._create(key);
+				// test oneofs before setting value
+				this._testOneofs(key);
+				// repeated fields are not valid
+				if(Array.isArray(this._value[key])) throw new Error(`Cannot urldecode repeated field ${key} in ${this.name}`);
+				// check for letter equivalence
+				if(this._value[key]._fieldType !== value.letter) throw new Error(`Invalid field type ${value.letter} for ${this._value[key]._fieldType}`);
+				// parse the value as a urlencoded thing
+				this._value[key].fromUrl(value.value);
 			}
-			// handle oneofs
-			this._testOneofs(key);
-			if(Array.isArray(this._value[key])) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
-			this._value[key].fromUrl(value[i] as string);
-			// finally, update property value
-			this._setProperty(key);
 		}
 	}
 
@@ -648,6 +641,9 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			}
 			// not erroring when the key is undefined
 			// since it is possible to have incomplete / partial definitions
+			else{
+				if(v !== undefined && v!== null) console.warn(`Invalid index ${index} in ${this._name} - skipping`);
+			}
 		}
 	}
 
