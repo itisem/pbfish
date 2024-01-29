@@ -14,7 +14,7 @@ export default class StringPBFField extends SimplePBFField<string>{
 
 	// does NOT handle full urls, just the decoding (for strings)
 	protected _decodeValue(value?: string | undefined): string | undefined{
-		if(value === undefined) return undefined;
+		if(value === undefined || value === "") return undefined;
 		const encodedDelimiter = this._options.delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
 		return decodeURIComponent(value.replaceAll(encodedDelimiter, this._options.delimiter).replaceAll("*2A", "*"));
 	}

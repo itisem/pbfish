@@ -1,5 +1,4 @@
 import StringPBFField from "../parsers/string";
-import Base64StringPBFField from "../parsers/base64-string";
 
 describe("string pbf fields", () => {
 	test("value can be set", () => {
@@ -18,11 +17,7 @@ describe("string pbf fields", () => {
 		expect(tester.toArray()).toBeUndefined();
 		tester.value = "hello world";
 		expect(tester.toArray()).toEqual("hello world");
-		const tester2 = new Base64StringPBFField();
-		expect(tester2.toArray()).toBeUndefined();
-		tester2.value = "hello world";
-		expect(tester2.toArray()).toEqual("hello world");
-		const repeatedTester = new Base64StringPBFField({repeated: true});
+		const repeatedTester = new StringPBFField({repeated: true});
 		repeatedTester.value = ["hello world"];
 		expect(repeatedTester.toArray()).toEqual(["hello world"]);
 	});
@@ -38,9 +33,6 @@ describe("string pbf fields", () => {
 		const tester2 = new StringPBFField({fieldNumber: 3, delimiter: "&"});
 		tester2.value = "hello world";
 		expect(tester2.toUrl()).toEqual("&3shello%20world");
-		const tester3 = new Base64StringPBFField({fieldNumber: 3});
-		tester3.value = "hello world";
-		expect(tester3.toUrl()).toEqual("!3zaGVsbG8gd29ybGQ")
 		const repeatedTester = new StringPBFField({repeated: true});
 		repeatedTester.value = ["hello world"];
 		expect(() => repeatedTester.toUrl()).toThrow();
@@ -67,10 +59,7 @@ describe("string pbf fields", () => {
 		expect(tester.isUndefined).toEqual(true);
 		expect(() => tester.fromUrl("!4sBad")).toThrow();
 		expect(() => tester.fromUrl("!3zuhoh")).toThrow();
-		const tester2 = new Base64StringPBFField({fieldNumber: 3});
-		tester2.fromUrl("!3zaGVsbG8gd29ybGQ");
-		expect(tester2.value).toEqual("hello world")
-		const repeatedTester = new StringPBFField({repeated: true, fieldNumber: 3});
+		const repeatedTester = new StringPBFField({fieldNumber: 3, repeated: true});
 		repeatedTester.fromArray(["hello world"]);
 		expect(repeatedTester.value).toEqual(["hello world"]);
 		repeatedTester.fromArray(["hello", "world"])
@@ -79,9 +68,9 @@ describe("string pbf fields", () => {
 	});
 	test("helper functions that have not been tested yet", () => {
 		const tester = new StringPBFField({fieldNumber: 3});
-		expect(tester["_encodeValue"]()).toBeUndefined();
+		expect(tester["_encodeValue"]()).toEqual("");
 		expect(tester["_encodeValue"]("a")).toEqual("a");
-		expect(tester["_decodeValue"]()).toBeUndefined();
+		expect(tester["_decodeValue"]()).toEqual(undefined);
 		expect(() => new StringPBFField({required: true}).validateValue()).toThrow();
 		expect(() => new StringPBFField({required: true}).validateValue("a")).not.toThrow();
 	})

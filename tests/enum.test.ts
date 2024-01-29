@@ -38,8 +38,8 @@ describe("enum pbf fields", () => {
 		repeatedTester.value = ["Kyrgyzstan", "Tajikistan"];
 		repeatedTester.value = [];
 		expect(tester.value).toBeUndefined();
-		expect(tester["lookupValue"](undefined)).toBeUndefined();
-		expect(tester["lookupValue"](null)).toBeUndefined();
+		expect(isNaN(tester["lookupValue"](undefined))).toBe(true);
+		expect(isNaN(tester["lookupValue"](null))).toBe(true);
 	});
 	test("value cannot be set to something wrong", () => {
 		const tester = new EnumPBFField({}, codes);

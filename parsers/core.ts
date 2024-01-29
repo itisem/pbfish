@@ -151,9 +151,8 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	// overwriting this method is enough, rather than overwriting the encoder itself
 	// url decoding is done in the message object itself
 	protected _encodeValue(value?: T | T[]): string{
-		const realValue = value ?? this._value ?? "";
+		const realValue = value ?? this._value ?? "null";
 		if(Array.isArray(realValue)) return JSON.stringify(realValue);
-		if(realValue === undefined) return "null";
 		// no need to handle it in _encodeValue since toUrl already handles it
 		return realValue.toString();
 	}
@@ -176,7 +175,10 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 
 	fromUrl(value?: string){
 		if(this._options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
-		if(value === undefined || value === "") this._value = undefined;
+		if(value === undefined || value === ""){
+			this._value = undefined;
+			return;
+		}
 		let newValue = this._decodeValue(this._parseUrlCore(value));
 		// setting using this.value instead of this._value since it immediately does validateValue
 		this.value = newValue;

@@ -57,10 +57,10 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	}
 
 	get value(): string | string[] | undefined{
+		if(this._value === undefined) return undefined;
 		// _value should always be an array if repeated, and not an array if not repeated
 		if(this._options.repeated){
 			// undefined is fine
-			if(this._value === undefined) return undefined;
 			// otherwise, non-array is erroneous
 			if(!Array.isArray(this._value)) throw new Error(`Something extremely unusual happened, and the value got corrupted in ${this._name}`);
 			else return this._value.map(x => this.lookupCode(x));
