@@ -1,4 +1,4 @@
-import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 // a pbf field with an uint32 type (u)
 export default class UInt32PBFField extends NumericPBFField{

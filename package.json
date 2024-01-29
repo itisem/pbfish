@@ -5,9 +5,13 @@
 	"author": "Emily Nagy",
 	"license": "MIT",
 	"devDependencies": {
+		"@babel/core": "^7.23.9",
+		"@babel/preset-env": "^7.23.9",
+		"@babel/preset-typescript": "^7.23.3",
 		"@types/jest": "^29.5.2",
+		"babel-jest": "^29.7.0",
+		"babel-plugin-remove-import-js-extension": "^0.0.3",
 		"jest": "^29.5.0",
-		"ts-jest": "^29.1.2",
 		"typescript": "^4.9.5"
 	},
 	"scripts": {

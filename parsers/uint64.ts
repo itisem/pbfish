@@ -1,4 +1,4 @@
-import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 // a pbf field with an uint64 value (v)
 // WARNING: since ts / js does floats, not ints, large values will get changed!!

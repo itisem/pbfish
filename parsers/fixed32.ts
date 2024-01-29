@@ -1,4 +1,4 @@
-import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 // a pbf field with a fixed32 type (x)
 // for all intents and purposes, acts identical to uint32 [for url and json encoding, which is what we do here]

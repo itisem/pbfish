@@ -1,4 +1,4 @@
-import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 // a pbf field with a float type (f)
 // WARNING: since ts / js has no efficient way of distinguishing between doubles and floats (everything is a double), checking is ommitted

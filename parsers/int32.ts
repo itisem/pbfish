@@ -1,4 +1,4 @@
-import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 // a pbf field with an int32 type (i)
 export default class Int32PBFField extends NumericPBFField{

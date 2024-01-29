@@ -1,6 +1,6 @@
-import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core";
-import uint8ArrayToBase64 from "../util/uint8array-to-base64";
-import base64ToUint8Array from "../util/base64-to-uint8array";
+import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
+import uint8ArrayToBase64 from "../util/uint8array-to-base64.js";
+import base64ToUint8Array from "../util/base64-to-uint8array.js";
 
 export default class BytesPBFField extends GenericPBFField<Uint8Array, Uint8Array, string>{
 	constructor(options?: PBFFieldOptions){

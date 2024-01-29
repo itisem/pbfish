@@ -1,4 +1,4 @@
-import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 // a pbf field with a sint64 type (o)
 // for all intents and purposes, acts identical to int64 [for url and json encoding, which is what we do here]

@@ -1,4 +1,4 @@
-import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {GenericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 export interface PBFEnum{
 	code: number;

@@ -1,7 +1,7 @@
 // re-exporting everything to have them accessible for anyone who needs the raw parsers for any reason
-import MessagePBFField from "./parsers/message";
+import MessagePBFField from "./parsers/message.js";
 
-import type {ProtobufDefinition, ManyProtobufDefinitions} from "./parsers/message";
+import type {ProtobufDefinition, ManyProtobufDefinitions} from "./parsers/message.js";
 
 export default class ProtobufParser{
 	protected definition: ManyProtobufDefinitions;

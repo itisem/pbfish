@@ -1,22 +1,22 @@
-import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, URLEncodedValue, defaultDelimiter} from "./core";
+import {GenericPBFField, extendOptions, PBFFieldOptions, EncodedValueArray, AnyEncodedValue, URLEncodedValue, defaultDelimiter} from "./core.js";
 
 // all other parsers, to be used for .from()
-import BoolPBFField from "./bool";
-import BytesPBFField from "./bytes";
-import DoublePBFField from "./double";
-import EnumPBFField from "./enum";
-import Fixed32PBFField from "./fixed32";
-import Fixed64PBFField from "./fixed64";
-import FloatPBFField from "./float";
-import Int32PBFField from "./int32";
-import Int64PBFField from "./int64";
-import SFixed32PBFField from "./sfixed32";
-import SFixed64PBFField from "./sfixed64";
-import SInt32PBFField from "./sint32";
-import SInt64PBFField from "./sint64";
-import StringPBFField from "./string";
-import UInt32PBFField from "./uint32";
-import UInt64PBFField from "./uint64";
+import BoolPBFField from "./bool.js";
+import BytesPBFField from "./bytes.js";
+import DoublePBFField from "./double.js";
+import EnumPBFField from "./enum.js";
+import Fixed32PBFField from "./fixed32.js";
+import Fixed64PBFField from "./fixed64.js";
+import FloatPBFField from "./float.js";
+import Int32PBFField from "./int32.js";
+import Int64PBFField from "./int64.js";
+import SFixed32PBFField from "./sfixed32.js";
+import SFixed64PBFField from "./sfixed64.js";
+import SInt32PBFField from "./sint32.js";
+import SInt64PBFField from "./sint64.js";
+import StringPBFField from "./string.js";
+import UInt32PBFField from "./uint32.js";
+import UInt64PBFField from "./uint64.js";
 
 // full descriptions of valid pbf fields and baseValues. primarily used for manually made classes
 export type PBFField = GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, AnyEncodedValue | MessagePBFFieldValue, AnyEncodedValue>;

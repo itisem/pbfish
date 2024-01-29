@@ -1,4 +1,4 @@
-import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core";
+import {NumericPBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 // a pbf field with a sfixed32 type (g)
 // for all intents and purposes, acts identical to int32 [for url and json encoding, which is what we do here]

@@ -1,4 +1,4 @@
-import {SimplePBFField, extendOptions, PBFFieldOptions} from "./core";
+import {SimplePBFField, extendOptions, PBFFieldOptions} from "./core.js";
 
 export default class StringPBFField extends SimplePBFField<string>{
 	constructor(options?: PBFFieldOptions){
