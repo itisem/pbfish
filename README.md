@@ -60,6 +60,6 @@ As of now, my current list of reverse engineered protobuf definitions is not pub
 
 As a general rule of thumb, you should probably prefer encoding data directly as protobufs, rather than the URL-encoded and JSON-encoded formats that this library provides. In particular, directly encoding files as protobuf will result in a much smaller filesize than JSON-encoded or URL encoded protobuf, and the binary nature of those formats will also enable faster encoding/decoding (according to my tests, the [`pbf` module](https://www.npmjs.com/package/pbf) has a 3.5x higher throughput than `pbfish`).
 
-That said, if, for some reason, you absolutely require using these alternate encodings, I do believe that pbfish is the fastest option. For the most part, "absolutely require" usually means that you have to interact with Google Maps or other, similar GRPC-based API endpoints, although there may be other options too!
+That said, if, for some reason, you absolutely require using these alternate JSON/URL encodings, I do believe that pbfish is the fastest option. For the most part, "absolutely require" usually means that you have to interact with Google Maps or other, similar GRPC-based API endpoints, although there may be other cases too!
 
 Note - as of now, the `bytes` datatype is unimplemented. I am working on it, and it should be available in the next update!
