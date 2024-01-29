@@ -15,13 +15,14 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		// since this is its own implementation, fieldType is just left to be its own thing
 	}
 
-	protected setValueCore(value: number | string){
+	protected getUnderlyingValue(value: number | string): number{
 		switch(typeof value){
 			case "number":
 				// ensuring that the code is valid
 				this.lookupCode(value);
 				return value;
 			case "string":
+				// safe typecast
 				return this.lookupValue(value);
 			default:
 				throw new Error(`Invalid type for value in ${this._name} -- this should never happen!!`);
@@ -41,16 +42,16 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 				}
 				else{
 					let tmpValue = [];
-					this._value = value.map(x => this.setValueCore(x));
+					this._value = value.map(x => this.getUnderlyingValue(x as number|string));
 				}
 			}
 		}
 		else{
 			if(this._options.repeated){
-				this._value = [this.setValueCore(value)];
+				this._value = [this.getUnderlyingValue(value)];
 			}
 			else{
-				this._value = this.setValueCore(value);
+				this._value = this.getUnderlyingValue(value);
 			}
 		}
 	}
@@ -70,15 +71,15 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 		}
 	}
 
-	protected lookupCode(code: number): string{
-		if(code === null || code === undefined) return undefined;
+	protected lookupCode(code?: number): string{
+		if(code === null || code === undefined) return "";
 		const found = this._codes.find(element => element.code === code);
 		if(!found) throw new Error(`Invalid enum code ${code} in ${this._name}, valid values are ${this._codes.map(x => x.code).join(", ")}`);
 		return found.value;
 	}
 
-	protected lookupValue(value: string): number{
-		if(value === null || value === undefined) return undefined;
+	protected lookupValue(value?: string): number{
+		if(value === null || value === undefined) return NaN;
 		const found = this._codes.find(element => element.value === value);
 		if(!found) throw new Error(`Invalid enum value ${value} in ${this._name}, valid values are ${this._codes.map(x => x.value).join(", ")}`);
 		return found.code;
@@ -93,6 +94,7 @@ export default class EnumPBFField extends GenericPBFField<number, string>{
 	protected _encodeValue(value?: number): string{
 		// no need to handle undefined since urlencode already does it
 		const realValue = value ?? this._value;
+		if(realValue === undefined) return "";
 		return realValue.toString();
 	}
 

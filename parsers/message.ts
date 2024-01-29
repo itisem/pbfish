@@ -23,7 +23,7 @@ export type PBFField = GenericPBFField<AnyEncodedValue | MessagePBFFieldObject, 
 
 // a single object
 export interface SingleMessagePBFFieldObject{
-	[key: string]: PBFField;
+	[key: string]: PBFField | PBFField[];
 };
 
 // specifically a message pbf field object
@@ -89,11 +89,11 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	protected _indices: string[];
 	protected _allIndices: string[];
 	// protobuf definitions
-	protected _definition?: IndividualProtobufDefinition;
+	protected _definition: IndividualProtobufDefinition;
 	protected _parent?: MessagePBFField;
-	protected _everyDefinition?: ManyProtobufDefinitions;
+	protected _everyDefinition: ManyProtobufDefinitions;
 	// checks for oneofs
-	protected _oneofs?: string[][];
+	protected _oneofs: string[][];
 	protected _activeOneofsByKey: {
 		[key: string]: number[];
 	}
@@ -101,6 +101,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 	protected _requiredFields: string[];
 	// forbidden names for quick access
 	protected _forbiddenNames: string[];
+	// overwriting value type since this one cannot be undefined
+	protected _value: SingleMessagePBFFieldObject;
 
 	constructor(options: PBFFieldOptions, description: MessagePBFFieldDescriptor){
 		super(extendOptions("m", options));
@@ -122,10 +124,12 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 		// setting parent map for accessing full definition later
 		if(!description.parent){
+			if(!description.allDefinitions) throw new Error(`Message field ${this._name} must have either a parent or a complete definition list`);
 			this._everyDefinition = description.allDefinitions;
 		}
 		else{
 			this._parent = description.parent;
+			this._everyDefinition = this._parent.allDefinitions;
 		}
 
 		this._definition = description.definition;
@@ -183,13 +187,14 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		}
 	}
 
-	validateValue(value?: MessagePBFFieldObject | MessagePBFFieldObject[]){
+	validateValue(value?: SingleMessagePBFFieldObject){
 		if(value === undefined) this._checkValidity();
-		if(this._options.required && this.isUndefined) throw new Error(`Required field cannot be undefined in ${this._name}`);
 		const realValue = value ?? this._value;
+		if(this._options.required && this.isUndefined) throw new Error(`Required field cannot be undefined in ${this._name}`);
+		if(realValue === undefined) return;
 		let fieldNumbers = [];
 		for(let k in realValue){
-			let v = realValue[k];
+			let v: PBFField | PBFField[] = realValue[k];
 			if(Array.isArray(v)){
 				let allIndices = new Set();
 				// if it's a repeated message field, validate everything individually
@@ -232,8 +237,12 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	// add a new field before a value is loaded into it
 	private _create(key: string, createMin?: number){
+		// additional safety checks in case a message field definition lacks fields, somehow
+		// it *should* never happen but better safe than sorry
+		const fields = this._definition?.fields;
+		if(!fields) throw new Error(`Attempting to create non-existent field ${this._name}.${key}`);
 		// load some basic definitions
-		const fieldDefinition = this._definition.fields[key];
+		const fieldDefinition = fields[key];
 		if(!fieldDefinition) throw new Error(`Attempting to create non-existent field ${this._name}.${key}`);
 		const fieldNumber = fieldDefinition.id;
 		if(!fieldNumber) throw new Error(`Unspecified field number ${this._name}.${key}`);
@@ -253,15 +262,18 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				throw new Error(`Cannot create copies of a non-repeated or non-message field ${this._name}.${key}`);
 				// this shouldn't cause an issue since createMin is only ever specified after calling create once before
 			}
+			// singling out value for type safety
+			const keyValue = this._value[key] as PBFField[];
 			// too many creations, delete some
-			if(createMin <= this._value[key].length){
-				this._value[key].splice(createMin);
+			if(createMin <= keyValue.length){
+				keyValue.splice(createMin);
 				return;
 			}
 			// find the definition, the same as if it was a "normal" thing
 			const nestedKeys = Object.keys(this._definition.nested ?? {});
 			let newDefinition: IndividualProtobufDefinition;
-			if(nestedKeys.includes(fieldDefinition.type)){
+			// adding an unnecessary nestedness check here because typescript is not smart enough to detect that it cannot be undefined
+			if(nestedKeys.includes(fieldDefinition.type) && this._definition.nested){
 				newDefinition = this._definition.nested[fieldDefinition.type];
 			}
 			else{
@@ -276,8 +288,8 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 			// a definition is a message iff it has a fields value
 			// by all accounts, this should not be possible based on logic later in the field
 			if(!newDefinition.fields) throw new Error(`Trying to repeat a non-message field in the incorrect way -- this should never be possible (${this._name}.${key})`);
-			for(let i = this._value[key].length; i < createMin; i++){
-				this._value[key].push(new MessagePBFField(fieldOptions, {
+			for(let i = keyValue.length; i < createMin; i++){
+				keyValue.push(new MessagePBFField(fieldOptions, {
 					parent: this,
 					definition: newDefinition
 				}));
@@ -335,7 +347,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				default:
 					const nestedKeys = Object.keys(this._definition.nested ?? {});
 					let newDefinition: IndividualProtobufDefinition;
-					if(nestedKeys.includes(fieldDefinition.type)){
+					if(nestedKeys.includes(fieldDefinition.type) && this._definition.nested){
 						newDefinition = this._definition.nested[fieldDefinition.type];
 					}
 					else{
@@ -402,16 +414,16 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		}
 	}
 
-	protected _setProperty(key){
+	protected _setProperty(key: string){
 		// no quick accessor for forbidden names that would be dangerous to overwrite
 		const setKey = this._forbiddenNames.includes(key) ? "__" + key : key;
-		let assign: {[k: string]: MessagePBFFieldProperty | MessagePBFFieldProperty[]} = {};
+		let assign: {[k: string]: any} = {};
 		const value = this._value[key];
 		// for undefined, just reset value
 		if(value === undefined) return Object.assign(this, {key: undefined});
 		// array values in _value only exist for message fields, so we just pass along the references
 		if(Array.isArray(value)) assign[setKey] = this._value[key];
-		else this._checkIfMessageField(value.value) ? assign[key] = this._value[setKey] : assign[key] = this._value[setKey].value;
+		else this._checkIfMessageField(value.value) ? assign[key] = this._value[setKey] : assign[key] = (this._value[setKey] as PBFField).value;
 		Object.assign(this, assign);
 	}
 
@@ -429,7 +441,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		for(let [k, v] of Object.entries(value)){
 			// the object doesn't exist yet, we need to create it anew
 			if(!this._value[k]){
-				if(Object.keys(this._definition.fields).includes(k)) this._create(k);
+				if(Object.keys(this._definition.fields ?? {}).includes(k)) this._create(k);
 				else throw new Error(`Attempting to set non-existent field ${this._name}.${k}`);
 			}
 			// checking for oneofs in case there is an error
@@ -438,11 +450,11 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				let allValues = Array.isArray(v) ? v : [v];
 				this._create(k, allValues.length); // ensure that there is the right number of message objects present
 				for(let i = 0; i < allValues.length; i++){
-					this._value[k][i].value = allValues[i];
+					(this._value[k] as PBFField[])[i].value = allValues[i];
 				}
 			}
 			else{
-				this._value[k].value = v;
+				(this._value[k] as PBFField).value = v;
 			}
 			// change property value for easier access
 			this._setProperty(k);
@@ -451,7 +463,6 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 
 	get value(): MessagePBFFieldValue{
 		this._checkValidity();
-		if(this._value === undefined) return undefined;
 		return Object.fromEntries(
 			Object.entries(this._value).map(([k, v]) => {
 				if(!Array.isArray(v)) return [k, v.value];
@@ -593,14 +604,15 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 				// repeated fields are not valid
 				if(Array.isArray(this._value[key])) throw new Error(`Cannot urldecode repeated field ${key} in ${this.name}`);
 				// check for letter equivalence
-				if(this._value[key].fieldType !== value.letter) throw new Error(`Invalid field type ${value.letter} for ${this._value[key].fieldType}`);
+				if((this._value[key] as PBFField).fieldType !== value.letter)
+					throw new Error(`Invalid field type ${value.letter} for ${(this._value[key] as PBFField).fieldType}`);
 				// parse the value as a urlencoded thing
-				this._value[key].fromUrl(value.value);
+				(this._value[key] as PBFField).fromUrl(value.value);
 			}
 		}
 	}
 
-	toArray(): EncodedValueArray{
+	toArray(): EncodedValueArray | undefined{
 		this.validateValue();
 		// this is the equivalent of an undefined value
 		if(Object.keys(this._value).length === 0) return undefined;
@@ -608,7 +620,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		for(let [k, v] of Object.entries(this._value)){
 			// for repeated message fields, encode them separately
 			if(Array.isArray(v)){
-				if(v.length === 0) return undefined; // empty array = nothing to return
+				if(v.length === 0) return; // empty array = nothing to return
 				// assumes that all field numbers are identical
 				// which should be the case unless field numbers are manually unlocked for whatever bizarre reason
 				encodedValue[v[0].fieldNumber - 1] = v.map(x => x.toArray());

@@ -26,8 +26,7 @@ export default class BytesPBFField extends GenericPBFField<Uint8Array, Uint8Arra
 		// setting urlsafe = true since this is, well, toUrl
 		// safe to typecast since arrayness was checked as a combination of this._options.repeated and this.validateValue
 		if(!this._options.fieldNumber) return uint8ArrayToBase64(this._value as Uint8Array, true);
-		else return 
-			this._options.delimiter + 
+		else return this._options.delimiter + 
 			this._options.fieldNumber.toString() + 
 			this._options.fieldType + 
 			uint8ArrayToBase64(this._value as Uint8Array, true);

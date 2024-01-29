@@ -27,7 +27,7 @@ export interface URLEncodedValue{
 	fieldCount: number;
 }
 
-export type SingleEncodedValue = number | string | boolean | undefined;
+export type SingleEncodedValue = number | string | boolean | Uint8Array | undefined;
 
 export type EncodedValueArray = (EncodedValueArray | SingleEncodedValue)[];
 
@@ -56,7 +56,7 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 		this._name = options.name ?? "";
 	}
 	abstract set value(value: T | U | T[] | U[] | undefined);
-	abstract get value(): U | U[];
+	abstract get value(): U | U[] | undefined;
 
 	// including an option to modify field numbers on the go
 	// by all accounts, this should never be used unless you are doing something extraordinarily weird (why?)
@@ -100,7 +100,7 @@ export abstract class GenericPBFField<T, U = T, V = T>{
 	}
 
 	protected _parseUrlCore(value?: string): string{
-		if(value === undefined || value === "") return;
+		if(value === undefined || value === "") return "";
 		if(value.startsWith(this._options.delimiter)){
 			const pattern = new RegExp(`^\\${this._options.delimiter}([0-9]+)([a-z])(.*)$`);
 			const matches = value.match(pattern);
@@ -151,7 +151,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	// overwriting this method is enough, rather than overwriting the encoder itself
 	// url decoding is done in the message object itself
 	protected _encodeValue(value?: T | T[]): string{
-		const realValue = value ?? this._value;
+		const realValue = value ?? this._value ?? "";
 		if(Array.isArray(realValue)) return JSON.stringify(realValue);
 		if(realValue === undefined) return "null";
 		// no need to handle it in _encodeValue since toUrl already handles it
@@ -210,7 +210,7 @@ export class NumericPBFField extends SimplePBFField<number>{
 	}
 
 	protected _validateValueCore(value: number | number[] | undefined, additionalValidations: (value?: number) => void){
-		const realValue: number | number[] = value ?? this._value;
+		const realValue = value ?? this._value;
 		super.validateValue(realValue);
 		if(realValue === undefined) return;
 		if(!Array.isArray(realValue)){
@@ -225,11 +225,11 @@ export class NumericPBFField extends SimplePBFField<number>{
 	}
 
 	validateValue(value?: number | number[]): void{
-		this._validateValueCore(value, (v: number) => null);
+		this._validateValueCore(value, (v?: number | number[]) => null);
 	}
 }
 
-export function extendOptions(fieldType: string, options: PBFFieldOptions): GenericPBFFieldOptions{
+export function extendOptions(fieldType: string, options?: PBFFieldOptions): GenericPBFFieldOptions{
 	if(!options) return {fieldType, delimiter: "?"};
 	const {fieldNumber, required, delimiter, repeated, name} = options;
 	return {fieldNumber, required, delimiter: delimiter ?? defaultDelimiter, repeated, fieldType, name};

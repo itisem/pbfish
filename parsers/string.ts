@@ -8,7 +8,7 @@ export default class StringPBFField extends SimplePBFField<string>{
 	protected _encodeValue(value?: string | string[]): string{
 		const realValue = value ?? this._value;
 		const encodedDelimiter = "*" + this._options.delimiter.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
-		if(!realValue) return undefined;
+		if(!realValue) return "";
 		return encodeURIComponent(realValue.toString()).replaceAll("*", "*2A").replaceAll(this._options.delimiter, encodedDelimiter);
 	}
 
