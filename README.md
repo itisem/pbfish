@@ -63,3 +63,11 @@ As a general rule of thumb, you should probably prefer encoding data directly as
 That said, if, for some reason, you absolutely require using these alternate JSON/URL encodings, I do believe that pbfish is the fastest option. For the most part, "absolutely require" usually means that you have to interact with Google Maps or other, similar GRPC-based API endpoints, although there may be other cases too!
 
 Note - as of now, the `bytes` datatype is unimplemented. I am working on it, and it should be available in the next update!
+
+## Licence
+
+`pbfish` is released under the [MIT licence](https://mit-license.org/). For more information, see the [LICENSE file](https://github.com/itisem/pbfish/blob/main/LICENSE) on Github.
+
+## Contributing
+
+You are more than welcome to open up an issue if you find a bug or a missing feature, or a pull request if you have a patch for something. The usual guidelines apply - don't make big changes without consulting me (@itisem) first, and treat everyone with kindness.
