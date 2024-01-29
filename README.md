@@ -1,6 +1,6 @@
 # pbfish 🐟
 
-A simple, zero-dependency module for handling Google Maps' loosely protobuf-inspired data formats. This module can handle the following two encodings:
+A simple, zero-dependency module for handling Google Maps' / GRPC's loosely protobuf-inspired data formats. This module can handle the following two encodings:
 
  * urlencoded protobuf, as seen in many Google Maps urls, i.e. [in this link](https://www.google.com/maps/@53.2115687,6.566413,3a,75y,255.84h,90t/data=!3m7!1e1!3m5!1sJ1lsIa1AUTItTwcisKl26Q!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fpanoid%3DJ1lsIa1AUTItTwcisKl26Q%26cb_client%3Dmaps_sv.tactile.gps%26w%3D203%26h%3D100%26yaw%3D247.16174%26pitch%3D0%26thumbfov%3D100!7i16384!8i8192) the entire part after `data=`
  * JSON-encoded protobuf, as seen in many internal Google Maps endpoints (such as SingleImageSearch), aka pretty much anything with a `application/json+protobuf` content-type.
@@ -58,9 +58,8 @@ As of now, my current list of reverse engineered protobuf definitions is not pub
 
 ## Limitations
 
-For any project that does not involve Google Maps, you will usually get better results if you use a standard protobuf format, rather than these alternative encodings. If you wish to do so, I recommend the [pbf](https://www.npmjs.com/package/pbf) module since it is very performant.
+As a general rule of thumb, you should probably prefer encoding data directly as protobufs, rather than the URL-encoded and JSON-encoded formats that this library provides. In particular, directly encoding files as protobuf will result in a much smaller filesize than JSON-encoded or URL encoded protobuf, and the binary nature of those formats will also enable faster encoding/decoding (according to my tests, the [`pbf` module](https://www.npmjs.com/package/pbf) has a 3.5x higher throughput than `pbfish`).
 
-The following features are missing:
+That said, if, for some reason, you absolutely require using these alternate encodings, I do believe that pbfish is the fastest option. For the most part, "absolutely require" usually means that you have to interact with Google Maps or other, similar GRPC-based API endpoints, although there may be other options too!
 
- * `bytes` datatype (I am yet to see a practical example of this in my reverse engineering, so I don't know what it looks like on Google's side)
- * urlencoding `repeated` fields (not sure if this is even allowed by Google Maps)
+Note - as of now, the `bytes` datatype is unimplemented. I am working on it, and it should be available in the next update!
