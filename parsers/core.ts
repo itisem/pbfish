@@ -178,8 +178,8 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 		if(this._options.repeated) throw new Error(`Repeated fields cannot be urlencoded in ${this._name}`);
 		if(value === undefined || value === "") this._value = undefined;
 		let newValue = this._decodeValue(this._parseUrlCore(value));
-		this.validateValue(newValue);
-		this._value = newValue;
+		// setting using this.value instead of this._value since it immediately does validateValue
+		this.value = newValue;
 	}
 
 	// json protobuf formatting
@@ -193,6 +193,7 @@ export abstract class SimplePBFField<T> extends GenericPBFField<T>{
 	}
 
 	fromArray(value?: T | T[]){
+		// setting using this.value instead of this._value since it immediately does validateValue
 		this.value = value;
 	}
 
