@@ -56,7 +56,7 @@ currentLocation.notes.country // returns "nl"
 
 As of now, my current list of reverse engineered protobuf definitions is not publicly available, but I will share them soon, hopefully.
 
-## Limitationsn
+## Limitations
 
 As a general rule of thumb, you should probably prefer encoding data directly as protobufs, rather than the URL-encoded and JSON-encoded formats that this library provides. In particular, directly encoding files as protobuf will result in a much smaller filesize than JSON-encoded or URL encoded protobuf, and the binary nature of those formats will also enable faster encoding/decoding (according to my tests, the [`pbf` module](https://www.npmjs.com/package/pbf) has a 3.5x higher throughput than `pbfish`).
 
