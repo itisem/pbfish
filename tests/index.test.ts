@@ -70,7 +70,7 @@ const badDefinition = {
 	}
 }
 
-describe("small definitions", () => {
+describe("main parser: small definitions", () => {
 	test("loads correct definitions", () => {
 		const parser = new pbfish(goodDefinition);
 		const location = parser.create("Location");
@@ -96,7 +96,7 @@ describe("small definitions", () => {
 	});
 })
 
-describe("large definitions", () => {
+describe("main parser: large definitions", () => {
 	test("loading large definitions doesn't brick the code", () => {
 		const startTime = Date.now();
 		const parser = new pbfish(SingleImageSearch);
@@ -199,7 +199,7 @@ describe("large definitions", () => {
 	});
 });
 
-describe("miscellaneous", () => {
+describe("main parser: miscellaneous", () => {
 	test("oneof", () => {
 		const parser = new pbfish(SingleImageSearch);
 		const request1 = parser.create("SingleImageSearchRequest");
@@ -248,5 +248,5 @@ describe("miscellaneous", () => {
 		request.delimiter = "A";
 		expect(request.delimiter).toEqual("A");
 		expect(request.location.center.delimiter).toEqual("A");
-	})
+	});
 });
