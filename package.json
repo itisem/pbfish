@@ -1,6 +1,6 @@
 {
 	"name": "@gmaps-tools/pbfish",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "A parser for Google Maps' protobuf-like formats",
 	"author": "Emily Nagy",
 	"license": "MIT",
@@ -17,13 +17,14 @@
 	"scripts": {
 		"test": "jest",
 		"cov": "jest --coverage",
-		"build": "rm -rf dist && npx tsc -p tsconfig-es6.json && npx tsc -p tsconfig-cjs.json && cp dist/cjs/index.d.ts dist/index.d.ts"
+		"build": "rm -rf dist && npx tsc --module commonjs --outDir dist/cjs && npx tsc --module es2022 --outDir dist/esm && cp dist/cjs/index.d.ts dist/index.d.ts"
 	},
-	"main": "./dist/cjs/index.js",
-	"module": "./dist/es6/index.js",
-	"types": "./dist/index.d.ts",
+	"main": "dist/cjs/index.js",
+	"module": "dist/esm/index.js",
+	"types": "dist/index.d.ts",
 	"exports": {
-		"require": "./dist/cjs/index.js",
-		"import": "./dist/es6/index.js"
-	}
+		"require": "dist/cjs/index.js",
+		"import": "dist/esm/index.js"
+	},
+	"type": "module"
 }
