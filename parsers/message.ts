@@ -595,7 +595,7 @@ export default class MessagePBFField extends GenericPBFField<SingleMessagePBFFie
 		for(let value of parsedValue){
 			const key = this._allIndices[value.index - 1]
 			// skip invalid indices
-			if(!key)
+			if(!key && value !== undefined && value !== null)
 				console.warn(`Invalid index ${value.index} in ${this._name} - skipping`);
 			else{
 				this._create(key);
